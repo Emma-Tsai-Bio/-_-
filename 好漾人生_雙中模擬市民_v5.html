@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>好漾人生｜雙中模擬市民 v6.0</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root{
+      --bg:#0b1020;--card:#121933;--line:#22305f;--ink:#e8eeff;--muted:#a8b7e8;
+      --ok:#123d2c;--ok2:#1c7c4f;--warn:#3a2b12;--warn2:#996f2a;--bad:#3a1212;--bad2:#912a2a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC",Arial}
+    header{position:sticky;top:0;z-index:4;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:#0b1020cc;backdrop-filter:blur(6px)}
+    main{padding:12px 12px 110px;max-width:1080px;margin:0 auto}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0;box-shadow:0 12px 24px rgba(0,0,0,.25);overflow:hidden}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .grid-2{display:grid;grid-template-columns:1fr;gap:10px}
+    @media(min-width:980px){.grid-2{grid-template-columns:1fr 1fr}}
+    input,select,button,textarea{font-size:16px;padding:8px 10px;border-radius:10px;border:1px solid #2a3a78;background:#0f1a3b;color:var(--ink)}
+    input,textarea{outline:none}
+    button{cursor:pointer}
+    .primary{background:#163183;border-color:#2c4fb2}
+    .good{background:var(--ok);border-color:var(--ok2)}
+    .warn{background:var(--warn);border-color:var(--warn2)}
+    .bad{background:var(--bad);border-color:var(--bad2)}
+    .badge{border:1px solid #31408a;border-radius:999px;padding:4px 10px;color:#cdd8ff;font-size:12px}
+    .pill{padding:4px 10px;border-radius:999px;background:#0e1630;border:1px solid #1d2a63;color:var(--muted);font-size:12px}
+    .table{width:100%;border-collapse:collapse;table-layout:auto}
+    .table th,.table td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;font-size:13px;white-space:nowrap}
+    .hidden{display:none}
+    .right{text-align:right}
+    .note{color:var(--muted);font-size:12px}
+    .bar{height:10px;border-radius:999px;background:#0e1630;border:1px solid #1d2a63;overflow:hidden;min-width:160px}
+    .bar>span{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);width:100%}
+    .sticky{position:fixed;bottom:0;left:0;right:0;background:#0b1020f2;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-around;padding:8px;z-index:9}
+    .scroll-table{max-height:260px;overflow-y:auto;overflow-x:auto}
+    .h4{font-size:16px;margin:0 0 6px}
+    .dash{display:flex;gap:10px;flex-wrap:wrap}
+    .dash .box{background:#0f1a3b;border:1px solid #2a3a78;border-radius:12px;padding:10px 12px;min-width:120px}
+    .dash .box b{font-size:18px}
+    .fab{position:fixed;right:16px;bottom:72px;z-index:5;padding:12px 16px;border-radius:999px;background:#1e3a8a;border:1px solid #3b82f6;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+    .swal2-html-container{text-align:center !important;}
+    #tAmt,#tE,#tM{width:90px}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="row">
+    <strong>好漾人生｜雙中模擬市民 v6.0</strong>
+    <span id="who" class="badge">未登入</span>
+  </div>
+  <div class="row">
+    <button id="btnSound" class="pill">🔈 提示音開</button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- 📇 封面 -->
+  <section id="page-cover" class="card">
+    <h3>📇 封面</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="row">
+          <label>班級</label><input id="klass" autocomplete="off" placeholder="901">
+          <label>座號</label><input id="no" autocomplete="off" placeholder="12">
+          <label>姓名</label><input id="name" autocomplete="off" placeholder="王小明" style="min-width:140px">
+        </div>
+        <div class="row">
+          <label>職業</label>
+          <select id="job"></select>
+        </div>
+        <div id="jobDesc" class="note">
+          請選擇職業，右側會顯示工作內容、薪資、體力／心情耗損、有薪假天數。
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="start" class="primary">儲存並開始（Day1）</button>
+          <button id="seeRules" class="warn">查看規則</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row"><span class="pill">學生識別</span><span id="sid" class="badge">尚未建立</span></div>
+        <div class="row"><span class="pill">已選職業</span><span id="jobNow" class="badge">—</span></div>
+        <div class="row">
+          <span class="pill">起始金錢</span>
+          <div class="bar"><span style="width:100%"></span></div>
+          <span class="pill" id="startMoney">1000</span>
+        </div>
+        <div class="row">
+          <span class="pill">體力</span>
+          <div class="bar"><span id="eBar"></span></div>
+          <span id="eVal" class="pill">100</span>
+        </div>
+        <div class="row">
+          <span class="pill">心情</span>
+          <div class="bar"><span id="mBar"></span></div>
+          <span id="mVal" class="pill">100</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 🎯 規則說明頁 -->
+  <section id="page-rules" class="card hidden">
+    <h2>🎯 遊戲任務說明</h2>
+    <p>
+      你即將體驗 4 天的《好漾人生模擬市民》！<br>
+      你的目標是：<strong>讓金錢 💵、體力 ❤️、心情 😊 都維持平衡</strong>。<br><br>
+      💀 任一數值變成 0 就會「死亡重生」，會被記錄死亡次數。<br>
+      🏆 遊戲結束後會根據三個數值換算成最終成果，誰能活得最平衡、最聰明呢？
+    </p>
+
+    <h3>🧩 基本玩法</h3>
+    <ul>
+      <li>💵 <strong>賺錢</strong>：主要靠工作、投資。</li>
+      <li>❤️ <strong>體力</strong>：每天至少吃 1 餐，吃飯可補體力。</li>
+      <li>😊 <strong>心情</strong>：透過休閒活動維持開心！</li>
+      <li>🎲 <strong>Day1、3</strong>：可以抽「命運事件卡」，可能好運、也可能倒楣！</li>
+      <li>💸 <strong>Day2、4</strong>：有強制支出（繳班費、水電費）要記得留錢！</li>
+      <li>☠️ 任一數值歸 0 會死亡重生，記錄 +1。</li>
+    </ul>
+
+    <div class="card">
+      <b>體力值、心情值規則與影響（系統會自動套用到薪水計算）</b>
+      <ul>
+        <li>體力 &gt; 110：薪水 1.5 倍</li>
+        <li>體力 &lt; 50：薪水減半</li>
+        <li>心情 &gt; 110：薪水 1.5 倍</li>
+        <li>心情 &lt; 30：薪水減半</li>
+      </ul>
+      <p class="note">＊實際發放玩具鈔時，老師也可以參考此倍率。</p>
+    </div>
+
+    <button id="toRecord" class="primary">去記帳 ▶</button>
+  </section>
+
+  <!-- 🧾 記帳頁 -->
+  <section id="page-record" class="card hidden">
+    <div class="row" style="justify-content:space-between">
+      <h3>🧾 記帳（第 <span id="day">1</span> 天）</h3>
+      <span class="pill">系統會在後台自動計算，但不會即時顯示結果</span>
+    </div>
+
+    <!-- 目前職業資訊 -->
+    <div id="jobBanner" class="card" style="margin-top:8px;margin-bottom:12px;">
+      <div class="note">目前尚未選擇職業，請先回到「封面」頁選職業。</div>
+    </div>
+
+    <!-- 🌅 每日提示 -->
+    <div id="alerts" class="card">
+      <h3>🌅 新的一天開始！</h3>
+      <p>
+        今天請完成以下事情 👇<br>
+        ① 做你的工作（或請假）→ 賺錢主要來源。<br>
+        ② 選擇吃飯 1～3 次 → 補體力。<br>
+        ③ 做 1～2 個休閒活動 → 加心情。<br>
+        ④ 若是 Day1 或 Day3 → 可抽命運事件卡！<br>
+        ⑤ 注意！Day2、Day4 會有強制花費，記得預留現金。💸
+      </p>
+    </div>
+
+    <!-- 快捷鍵 -->
+    <div class="card">
+      <div class="grid-2">
+        <!-- 左：工作＋請假＋休閒 -->
+        <div>
+          <div class="h4">💼 工作與請假</div>
+          <div class="row">
+            <button id="work" class="primary">完成工作（教師認證）</button>
+            <button id="giftBtn" class="good hidden">粉絲贈禮（大網紅）</button>
+          </div>
+          <div class="row">
+            <button id="leavePaid" class="good">請有薪假</button>
+            <button id="leaveUnpaid" class="warn">請無薪假</button>
+          </div>
+          <p class="note">
+            ＊請假後，休閒活動次數不限；有薪假仍可領薪水，無薪假則沒有薪水。<br>
+            ＊有薪假與無薪假需自行在記帳面板填寫金錢、體力、心情變化。
+          </p>
+
+          <hr>
+
+          <div class="h4">🎮 休閒活動（每日最多 2 次，如當天請假則無上限）</div>
+          <p class="note">
+            🎲 每天最多玩 2 個活動（請假可玩不限次）。<br>
+            💬 太多娛樂也會累，別讓體力爆掉喔！
+          </p>
+          <div class="row">
+            <button id="fun0" class="good">看電影（錢-200 / 體-10 / 心+20）</button>
+            <button id="fun1" class="good">打電動（錢-50 / 體-10 / 心+15）</button>
+            <button id="fun2" class="good">聚餐（錢-250 / 體-10 / 心+25）</button>
+            <button id="fun3" class="good">運動（錢-10 / 體-25 / 心+15）</button>
+            <button id="fun4" class="good">畫畫／讀書（錢-100 / 體-5 / 心+10）</button>
+          </div>
+        </div>
+
+        <!-- 右：餐食＋抽卡 -->
+        <div>
+          <div class="h4">🍱 餐食（每日最多 3 次）</div>
+          <p class="note">
+            💡 每天至少吃一餐，不吃會掉體力又掉心情！<br>
+            🧑‍🍳 自己煮要花時間（會占 1 個休閒格），但最均衡又省錢。
+          </p>
+          <div class="row">
+            <button id="food0" class="warn">不吃飯（錢0 / 體-20 / 心-15）</button>
+            <button id="food1" class="warn">自己備餐（錢-100 / 體+20 / 心+10）</button>
+            <button id="food2" class="warn">路邊攤（錢-100 / 體+15 / 心+10）</button>
+            <button id="food3" class="warn">健康餐盒（錢-200 / 體+30 / 心+0）</button>
+            <button id="food4" class="warn">奢侈速食（錢-300 / 體+10 / 心+20）</button>
+          </div>
+
+          <div id="drawBlock" class="hidden" style="margin-top:12px">
+            <div class="h4">🎲 命運事件卡（Day1、Day3，每日最多 2 次）</div>
+            <div class="row">
+              <button id="btnDraw" class="primary">抽事件卡（幸運／不幸）</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 記帳與明細 -->
+    <div class="card">
+      <div class="h4">🧾 記帳與今日明細</div>
+      <div id="jobRule" class="note" style="margin-bottom:6px;">職業：—</div>
+      <div class="grid-2">
+        <div>
+          <div class="row">
+            <label>收／支</label>
+            <select id="tType">
+              <option value="income">收入</option>
+              <option value="expense">支出</option>
+            </select>
+            <label>類別</label>
+            <select id="tCat">
+              <option value="salary">薪資／打工</option>
+              <option value="food">餐食</option>
+              <option value="leisure">休閒</option>
+              <option value="bank">銀行／利息</option>
+              <option value="loan">借款／還款</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>金額</label>
+            <input id="tAmt" type="number" placeholder="可為 0">
+            <label>體力變化</label>
+            <input id="tE" type="number" placeholder="-10 或 20">
+            <label>心情變化</label>
+            <input id="tM" type="number" placeholder="+15 或 -5">
+          </div>
+          <div class="row">
+            <label>備註</label>
+            <input id="tNote" style="flex:1" placeholder="例如：看電影／繳班費">
+            <button id="add" class="primary">加入本日</button>
+          </div>
+          <p class="note">＊下方儀表板與體／心數值以「學生自行輸入」為準，與系統後台可能不同。</p>
+          <div class="dash">
+            <div class="box">目前金錢<br><b id="dashMoney">1000</b></div>
+            <div class="box">目前體力<br><b id="dashE">100</b></div>
+            <div class="box">目前心情<br><b id="dashM">100</b></div>
+          </div>
+        </div>
+        <div>
+          <div class="scroll-table">
+            <table class="table" id="tTable">
+              <thead>
+              <tr><th>日期</th><th>收／支</th><th>類別</th><th>金額</th><th>體</th><th>心</th><th>備註</th><th></th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="row"><button id="clear" class="warn">清空今日</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 🏁 結算頁 -->
+  <section id="page-summary" class="card hidden">
+    <h3>🎉 恭喜完成 4 天挑戰！</h3>
+    <p>
+      來看看你的人生過得如何吧：<br>
+      💵 錢夠用嗎？ ❤️ 雙腳撐得住嗎？ 😊 還快樂嗎？<br><br>
+      💀 死亡會扣分，欠債會減分。<br>
+      🧘‍♂️ 三值都穩又沒欠債 = <strong>人生平衡王！</strong><br><br>
+      完成後請點「送交到表單」，並回答反思問題。
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4 class="h4">系統後台計算</h4>
+        <div class="row">
+          <span class="pill">金：<span id="smMoney">0</span></span>
+          <span class="pill">體：<span id="smE">0</span></span>
+          <span class="pill">心：<span id="smM">0</span></span>
+          <span class="pill">死：<span id="smD">0</span></span>
+        </div>
+      </div>
+      <div class="card">
+        <h4 class="h4">學生自行記帳</h4>
+        <div class="row">
+          <span class="pill">金：<span id="stMoney">0</span></span>
+          <span class="pill">體：<span id="stE">0</span></span>
+          <span class="pill">心：<span id="stM">0</span></span>
+          <span class="pill">死：<span id="stD">0</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4 class="h4">📐 誤差分析</h4>
+      <div id="delta" class="note">—</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4 class="h4">🧮 系統明細（後台紀錄）</h4>
+        <div class="scroll-table">
+          <table class="table" id="sysTable">
+            <thead>
+            <tr><th>日</th><th>收／支</th><th>類別</th><th>金額</th><th>體</th><th>心</th><th>備註</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h4 class="h4">✍ 學生記帳明細</h4>
+        <div class="scroll-table">
+          <table class="table" id="stuTable">
+            <thead>
+            <tr><th>日</th><th>收／支</th><th>類別</th><th>金額</th><th>體</th><th>心</th><th>備註</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="copy" class="good">複製 JSON</button>
+      <button id="sendEnd" class="primary">送交到表單</button>
+    </div>
+  </section>
+
+  <!-- 👩‍🏫 教師端 -->
+  <section id="page-teacher" class="card hidden">
+    <div class="row" style="justify-content:space-between">
+      <h3>👩‍🏫 教師工具</h3>
+      <div class="row">
+        <input id="tpw" autocomplete="off" placeholder="教師碼" style="width:150px">
+        <button id="tun" class="primary">解鎖</button>
+      </div>
+    </div>
+
+    <div id="tTools" class="hidden">
+      <div class="card">
+        <h4 class="h4">📨 表單設定</h4>
+        <p class="note">貼 Google 表單 formResponse 的網址前段（含 entry= 等號），學生按「送交到表單」時會把 JSON 接在後面。</p>
+        <div class="row">
+          <input id="formURL" autocomplete="off" style="flex:1">
+          <button id="saveForm" class="primary">儲存</button>
+          <span id="formSaved" class="pill">—</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 class="h4">🧩 匯總學生快照</h4>
+        <textarea id="agg" style="width:100%;min-height:140px" placeholder='{"key":"901-12-王小明","day":4,"system":{"money":1200,"energy":80,"mood":90,"deaths":0},"student":{"money":1100,"energy":70,"mood":85,"deaths":1}}'></textarea>
+        <div class="row">
+          <button id="parse" class="primary">解析</button>
+          <button id="csvAll" class="good">下載全班 CSV</button>
+        </div>
+        <div class="scroll-table">
+          <table class="table" id="aggT">
+            <thead>
+            <tr>
+              <th>學生</th><th>天數</th>
+              <th>sys 金</th><th>stu 金</th>
+              <th>sys 體</th><th>stu 體</th>
+              <th>sys 心</th><th>stu 心</th>
+              <th>sys 死</th><th>stu 死</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 下方導覽 -->
+<div class="sticky">
+  <button data-nav="#page-cover">封面</button>
+  <button data-nav="#page-rules">規則</button>
+  <button data-nav="#page-record">記帳</button>
+  <button data-nav="#page-summary">結算</button>
+  <button data-nav="#page-teacher">教師</button>
+</div>
+
+<!-- 結束今天 -->
+<button id="endDay" class="fab">結束今天 ▶</button>
+
+<script>
+(function(){
+  function $(s){return document.querySelector(s)}
+  function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
+  var PFX="hy-young-v60";
+  var TEACHER="127";
+
+  // 🔊 音效
+  var audio=null,soundOn=true;
+  function ainit(){if(!audio){try{audio=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}}
+  function beep(k){
+    if(!soundOn)return;
+    ainit();if(!audio)return;
+    var o=audio.createOscillator(),g=audio.createGain();
+    o.connect(g);g.connect(audio.destination);
+    var t=audio.currentTime;var f=700,d=.12;
+    if(k==='start')f=520;
+    if(k==='card')f=760;
+    if(k==='warn')f=240;
+    if(k==='dead')f=160;
+    if(k==='ding')f=1200;
+    if(k==='cash')f=500;
+    o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(.2,t+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.start(t);o.stop(t+d+.02);
+  }
+  $('#btnSound').onclick=function(){
+    soundOn=!soundOn;
+    $('#btnSound').textContent=soundOn?'🔈 提示音開':'🔇 提示音關';
+  };
+
+  function alertInfo(html){Swal.fire({icon:"info",html:html,confirmButtonText:"好"});}
+  function alertSuccess(html){Swal.fire({icon:"success",html:html,confirmButtonText:"太棒了！"});}
+  function alertWarn(html){Swal.fire({icon:"warning",html:html,confirmButtonText:"我知道了"});}
+  function alertError(html){Swal.fire({icon:"error",html:html,confirmButtonText:"好"});}
+
+  // 職業
+  var JOBS=[
+    {id:'mega',name:'黑紅大網紅（有薪假0天）',salary:600,e:-60,m:-50,pl:0,
+      desc:'每天錄影紀錄1種職業內容，並產出介紹文字、標題。工作完成後，可能觸發粉絲贈禮。薪資：完成 +600；體力-60；心情-50。'},
+    {id:'eng',name:'工程師',salary:500,e:-50,m:-40,pl:1,base:150,bonus:350,
+      desc:'每天完成一個程式。薪資：底薪150＋完成獎金350（共500）；體力-50；心情-40。'},
+    {id:'teacher',name:'老師',salary:300,e:-20,m:-40,pl:1,
+      desc:'每天完成一個題目講解或重點筆記整理。薪資：+300；體力-20；心情-40。'},
+    {id:'admin',name:'行政人員',salary:150,e:-15,m:-20,pl:1,
+      desc:'打字（學科重點）。薪資：+150；體力-15；心情-20。'},
+    {id:'clean',name:'清潔人員',salary:100,e:-30,m:-30,pl:1,
+      desc:'掃教室、擦窗戶、整理回收物⋯⋯。薪資：+100；體力-30；心情-30。'},
+    {id:'mini',name:'小網紅（有薪假0天）',salary:80,e:-40,m:+30,pl:0,
+      desc:'拍1張合格活動照片＋拍抖音音樂舞。薪資：+80；體力-40；心情+30。'}
+  ];
+
+  var LUCKY=[
+    {name:'撿到錢包並歸還',amt:+100,e:0,m:+10},
+    {name:'抽中商品禮券',amt:+200,e:0,m:+15},
+    {name:'聚餐朋友請客',amt:0,e:0,m:+20},
+    {name:'抽到免費旅遊券',amt:0,e:+10,m:+30}
+  ];
+  var UNLUCKY=[
+    {name:'下大雨沒帶傘',amt:-100,e:-10,m:-10},
+    {name:'感冒需要看醫生',amt:-200,e:-20,m:-10},
+    {name:'手機壞掉維修',amt:-300,e:0,m:-20},
+    {name:'鑰匙不見找鎖匠',amt:-200,e:-5,m:-10},
+    {name:'騎腳踏車闖紅燈',amt:-300,e:0,m:-20},
+    {name:'不小心受傷住院',amt:-400,e:-20,m:-20}
+  ];
+
+  var S={
+    meta:{klass:'',no:'',name:'',day:1},
+    job:null,
+    tx_stu:{1:[],2:[],3:[],4:[]},
+    tx_sys:{1:[],2:[],3:[],4:[]},
+    formURL:'',
+    effects:{},
+    counters:{},
+    leave:{},
+    leavePaidUsed:0,
+    deathCount:0,
+    deathDays:[]
+  };
+
+  function key(){return PFX+":"+(S.meta.klass||'NA')+"-"+(S.meta.no||'NA')+"-"+(S.meta.name||'NA');}
+  function save(){try{localStorage.setItem(key(),JSON.stringify(S));}catch(e){}}
+  function load(k){var s=localStorage.getItem(k);if(s){try{S=JSON.parse(s);}catch(e){}}}
+  function nav(id){
+    var secs=$$('main>section');
+    for(var i=0;i<secs.length;i++){secs[i].classList.toggle('hidden','#'+secs[i].id!==id);}
+    location.hash=id;
+  }
+  function setBars(e,m){
+    $('#eBar').style.width=Math.max(0,Math.min(100,e))+'%';
+    $('#mBar').style.width=Math.max(0,Math.min(100,m))+'%';
+    $('#eVal').textContent=Math.round(e);
+    $('#mVal').textContent=Math.round(m);
+  }
+  function fmtSign(v){if(v===undefined||v===null)return'';return v>=0?('+'+v):v;}
+  function transCat(c){
+    var map={salary:'薪資／打工',food:'餐食',leisure:'休閒',bank:'銀行／利息',loan:'借款／還款',event:'事件',other:'其他'};
+    return map[c]||c;
+  }
+
+  // 職業選單
+  var jobSel=$('#job');
+  jobSel.innerHTML='<option value="">— 請選擇 —</option>'+JOBS.map(function(j){return'<option value="'+j.id+'">'+j.name+'</option>';}).join('');
+  function renderJobBanner(){
+    if(!S.job){
+      $('#jobBanner').innerHTML='<div class="note">目前尚未選擇職業，請先回到「封面」頁選職業。</div>';
+      return;
+    }
+    $('#jobBanner').innerHTML=
+      '<div class="row"><span class="pill">目前職業</span><b>'+S.job.name+'</b></div>'+
+      '<div class="row">'+
+        '<span class="pill">每次完成工作：約 $'+S.job.salary+'</span>'+
+        '<span class="pill">體力 '+S.job.e+'</span>'+
+        '<span class="pill">心情 '+S.job.m+'</span>'+
+        '<span class="pill">有薪假 '+S.job.pl+' 天</span>'+
+      '</div>';
+  }
+  function paintJobDesc(){
+    if(!S.job){
+      $('#jobNow').textContent='—';
+      $('#jobDesc').textContent='請選擇職業，右側會顯示工作內容、薪資、體力／心情耗損、有薪假天數。';
+      $('#jobRule').textContent='職業：—';
+      $('#giftBtn').classList.add('hidden');
+      renderJobBanner();
+      return;
+    }
+    $('#jobNow').textContent=S.job.name;
+    if(S.job.id==='mega')$('#giftBtn').classList.remove('hidden');else $('#giftBtn').classList.add('hidden');
+    $('#jobDesc').innerHTML='<div class="pill">工作內容：'+S.job.desc+'</div>'
+      +'<div class="pill">每次完成薪資：約 $'+S.job.salary+'</div>'
+      +'<div class="pill">體力變化：'+S.job.e+'</div>'
+      +'<div class="pill">心情變化：'+S.job.m+'</div>'
+      +'<div class="pill">有薪假天數：'+S.job.pl+'</div>';
+    $('#jobRule').innerHTML='職業：<b>'+S.job.name+'</b> ｜ 每次完成工作：<b>約 $'+S.job.salary+'</b> ｜ 體力 '+S.job.e+' ｜ 心情 '+S.job.m+' ｜ 有薪假天數：'+S.job.pl;
+    renderJobBanner();
+  }
+  jobSel.onchange=function(){
+    var id=jobSel.value;S.job=null;
+    for(var i=0;i<JOBS.length;i++){if(JOBS[i].id===id){S.job=JOBS[i];break;}}
+    paintJobDesc();save();
+  };
+
+  // 封面開始
+  var started=false;
+  $('#start').onclick=function(){
+    S.meta.klass=$('#klass').value.trim();
+    S.meta.no=$('#no').value.trim();
+    S.meta.name=$('#name').value.trim();
+    S.meta.day=1;
+    S.counters={1:{food:0,fun:0,draw:0},2:{food:0,fun:0,draw:0},3:{food:0,fun:0,draw:0},4:{food:0,fun:0,draw:0}};
+    S.leave={};
+    S.leavePaidUsed=0;
+    S.deathCount=0;
+    S.deathDays=[];
+    $('#who').textContent=S.meta.name?(S.meta.klass+"-"+S.meta.no+"-"+S.meta.name):'未登入';
+    $('#sid').textContent=key();
+    if(!S.job && jobSel.value){
+      var id=jobSel.value;for(var i=0;i<JOBS.length;i++){if(JOBS[i].id===id){S.job=JOBS[i];break;}}
+    }
+    save();
+    $('#day').textContent=S.meta.day;
+    started=false;
+    paintJobDesc();
+    nav('#page-rules');
+  };
+  $('#seeRules').onclick=function(){nav('#page-rules');};
+  $('#toRecord').onclick=function(){nav('#page-record');if(!started){started=true;dayStart(true);}};
+
+  // 學生記帳
+  var tbody=$('#tTable tbody');
+  function renderStuTable(){
+    var d=S.meta.day,arr=S.tx_stu[d]||[];
+    tbody.innerHTML='';
+    for(var i=0;i<arr.length;i++){
+      var t=arr[i];
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td>第'+(t.day||d)+'天</td>'
+        +'<td>'+(t.type==='income'?'收入':'支出')+'</td>'
+        +'<td>'+transCat(t.cat)+'</td>'
+        +'<td class="right">'+t.amt+'</td>'
+        +'<td class="right">'+fmtSign(t.e)+'</td>'
+        +'<td class="right">'+fmtSign(t.m)+'</td>'
+        +'<td>'+(t.note||'')+'</td>'
+        +'<td><button class="bad del-row" data-idx="'+i+'">刪除</button></td>';
+      tbody.appendChild(tr);
+    }
+  }
+  tbody.addEventListener('click',function(e){
+    var target=e.target;
+    if(target.classList.contains('del-row')){
+      var idx=parseInt(target.getAttribute('data-idx'),10);
+      var d=S.meta.day;
+      if(S.tx_stu[d]){S.tx_stu[d].splice(idx,1);save();renderStuTable();updateStuBarsAndDash();}
+    }
+  });
+  function addStu(t){
+    var d=S.meta.day;t.day=d;
+    if(!S.tx_stu[d])S.tx_stu[d]=[];
+    S.tx_stu[d].push(t);
+    save();renderStuTable();updateStuBarsAndDash();
+  }
+  $('#add').onclick=function(){
+    var rawAmt=$('#tAmt').value;
+    if(rawAmt===''){alertWarn('請輸入金額（可以是 0 ）');return;}
+    var t={
+      type:$('#tType').value,
+      cat:$('#tCat').value,
+      amt:+rawAmt,
+      e:+($('#tE').value||0),
+      m:+($('#tM').value||0),
+      note:($('#tNote').value||'').trim(),
+      ts:Date.now()
+    };
+    addStu(t);
+    $('#tAmt').value='';$('#tE').value='';$('#tM').value='';$('#tNote').value='';
+  };
+  $('#clear').onclick=function(){
+    if(confirm('清空今日所有紀錄？')){
+      S.tx_stu[S.meta.day]=[];
+      save();renderStuTable();updateStuBarsAndDash();
+    }
+  };
+
+  // 後台系統帳
+  function addSys(t){
+    var d=S.meta.day;
+    if(!S.tx_sys[d])S.tx_sys[d]=[];
+    S.tx_sys[d].push(t);save();
+  }
+
+  // 🔁 學生端總結（含重生，重置從「下一天」開始生效）
+  function calcStuUpTo(day){
+    var money = 1000, energy = 100, mood = 100, deaths = 0;
+    for (var d = 1; d <= day; d++) {
+      var arr = S.tx_stu[d] || [];
+      for (var i = 0; i < arr.length; i++) {
+        var t = arr[i];
+        money  += (t.type === 'income' ? +t.amt : -t.amt);
+        energy += t.e || 0;
+        mood   += t.m || 0;
+      }
+      var sysDie = S.deathDays && S.deathDays.indexOf(d) !== -1;
+      var stuDie = (money < 0 || energy <= 0 || mood <= 0);
+      if (sysDie || stuDie) {
+        deaths++;
+        if (d < day) {
+          money  = 1000;
+          energy = 100;
+          mood   = 100;
+        }
+      }
+    }
+    return {money:money,energy:energy,mood:mood,deaths:deaths};
+  }
+  function updateStuBarsAndDash(){
+    var r=calcStuUpTo(S.meta.day);
+    setBars(r.energy,r.mood);
+    $('#dashMoney').textContent=Math.round(r.money);
+    $('#dashE').textContent=Math.round(r.energy);
+    $('#dashM').textContent=Math.round(r.mood);
+  }
+
+  // 🔁 系統端計算：考慮死亡日，真的重置
+  function calcSysEndState(day){
+    var money=1000,energy=100,mood=100;
+    var deaths = S.deathDays||[];
+    for(var d=1;d<=day;d++){
+      var arr=S.tx_sys[d]||[];
+      for(var i=0;i<arr.length;i++){
+        var t=arr[i];
+        money+=(t.type==='income'?+t.amt:-t.amt);
+        energy+=t.e||0;
+        mood+=t.m||0;
+      }
+      // 只對「之前已經登記過的死亡日且小於 day」做重置
+      if(deaths.indexOf(d)!==-1 && d<day){
+        money=1000;energy=100;mood=100;
+      }
+    }
+    return {money:money,energy:energy,mood:mood};
+  }
+
+  // 某天開始時的狀態（若前一天死亡，則從 1000/100/100 開始）
+  function getStartStateForDay(d){
+    if(d===1)return{money:1000,energy:100,mood:100};
+    var prevDay=d-1;
+    var endPrev=calcSysEndState(prevDay);
+    if(S.deathDays && S.deathDays.indexOf(prevDay)!==-1){
+      return {money:1000,energy:100,mood:100};
+    }
+    return endPrev;
+  }
+
+  function calcSysAllForPayload(){
+    var r=calcSysEndState(4);
+    return{
+      money:r.money,
+      energy:r.energy,
+      mood:r.mood,
+      deaths:S.deathCount||0
+    };
+  }
+
+  // 限制次數
+  var LIMITS={food:3,fun:2,draw:2};
+  function canUse(kind){
+    var d=S.meta.day,c=S.counters[d]||{food:0,fun:0,draw:0};
+    if(kind==='fun'&&S.leave[d])return true;
+    if(c[kind]===undefined)return true;
+    if(c[kind]>=LIMITS[kind]){
+      alertWarn('今天的「'+(kind==='food'?'餐食':kind==='fun'?'休閒':'抽卡')+'」已達上限。');
+      return false;
+    }
+    return true;
+  }
+  function used(kind){
+    var d=S.meta.day;
+    if(!S.counters[d])S.counters[d]={food:0,fun:0,draw:0};
+    S.counters[d][kind]++;save();
+  }
+
+  function updateWorkButton(){
+    var d=S.meta.day,leave=S.leave[d];
+    $('#work').disabled=!!leave;
+  }
+
+  // 請假
+  $('#leavePaid').onclick=function(){
+    var d=S.meta.day;
+    if(S.leave[d]){alertWarn('今天已經有請假紀錄，無法重複設定。');return;}
+    if(!S.job){alertWarn('請先選擇職業才能計算有薪假天數。');return;}
+    if(S.job.pl===0){alertWarn('此職業無有薪假天數。');return;}
+    if(S.leavePaidUsed>=S.job.pl){alertWarn('已用完所有有薪假天數。');return;}
+    S.leave[d]='paid';S.leavePaidUsed++;save();updateWorkButton();
+    alertInfo('今天設定為「有薪假」，<br>請在記帳面板自行填寫：<br>'
+      +'收／支：收入；類別：薪資／打工；<br>'
+      +'金額：約 $'+(S.job?S.job.salary:0)+'；體力 +10；心情 +10。<br>'
+      +'（當天休閒活動次數不限）');
+  };
+  $('#leaveUnpaid').onclick=function(){
+    var d=S.meta.day;
+    if(S.leave[d]){alertWarn('今天已經有請假紀錄，無法重複設定。');return;}
+    S.leave[d]='unpaid';save();updateWorkButton();
+    alertInfo('今天設定為「無薪假」，休閒活動次數不限。<br>'
+      +'請在記帳面板自行填寫：<br>'
+      +'收／支：收入；類別：薪資／打工；<br>'
+      +'金額：0；體力 +10；心情 +20。');
+  };
+
+  // 粉絲贈禮（黑紅大網紅，且當天不是無薪假）
+  $('#giftBtn').onclick=function(){
+    if(!S.job || S.job.id!=='mega'){
+      alertWarn('只有「黑紅大網紅」可以使用粉絲贈禮喔！');
+      return;
+    }
+    var d=S.meta.day;
+    if(S.leave && S.leave[d]==='unpaid'){
+      alertWarn('今天你請了「無薪假」，粉絲們也暫時沒有斗內喔～<br>明天努力工作，再看看粉絲有沒有送禮物吧！');
+      return;
+    }
+    var gifts=Math.floor(Math.random()*11); // 0–10
+    var total=gifts*20;
+    if(gifts===0){
+      alertInfo('今天暫時沒有粉絲斗內，明天再接再厲！');
+      return;
+    }
+    addSys({type:'income',cat:'event',amt:total,e:0,m:0,note:'粉絲贈禮 '+gifts+' 個'});
+    beep('ding');
+    alertSuccess('恭喜你～獲得粉絲斗內 <b>'+gifts+'</b> 個禮物，總共獲得 <b>'+total+'</b> 元！');
+  };
+
+  // 餐食
+  $('#food0').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:0,e:-20,m:-15,note:'不吃飯'});used('food');beep('cash');alertInfo('🍽 不吃飯 → 體-20 / 心-15');};
+  $('#food1').onclick=function(){if(!canUse('food'))return;if(!canUse('fun'))return;addSys({type:'expense',cat:'food',amt:100,e:+20,m:+10,note:'自己備餐'});used('food');used('fun');beep('cash');alertInfo('🍱 自己備餐 -100，體+20 / 心+10（同時占用 1 次休閒額度）');};
+  $('#food2').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:100,e:+15,m:+10,note:'路邊攤'});used('food');beep('cash');alertInfo('🥟 路邊攤 -100，體+15 / 心+10');};
+  $('#food3').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:200,e:+30,m:+0,note:'健康餐盒'});used('food');beep('cash');alertInfo('🥗 健康餐盒 -200，體+30 / 心+0');};
+  $('#food4').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:300,e:+10,m:+20,note:'奢侈速食'});used('food');beep('cash');alertInfo('🍔 奢侈速食 -300，體+10 / 心+20');};
+
+  // 休閒
+  $('#fun0').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:200,e:-10,m:+20,note:'看電影'});used('fun');beep('ok');alertInfo('🎬 看電影 -200，體-10 / 心+20');};
+  $('#fun1').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:50,e:-10,m:+15,note:'打電動'});used('fun');beep('ok');alertInfo('🕹 打電動 -50，體-10 / 心+15');};
+  $('#fun2').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:250,e:-10,m:+25,note:'聚餐'});used('fun');beep('ok');alertInfo('🍻 聚餐 -250，體-10 / 心+25');};
+  $('#fun3').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:10,e:-25,m:+15,note:'運動'});used('fun');beep('ok');alertInfo('🏃 運動 -10，體-25 / 心+15');};
+  $('#fun4').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:100,e:-5,m:+10,note:'畫畫／讀書'});used('fun');beep('ok');alertInfo('🎨 畫畫／讀書 -100，體-5 / 心+10');};
+
+  function applyFx(base,fx){return Math.round(base*fx);}
+
+  // 工作（含工程師底薪/全薪＋倍率）
+  $('#work').onclick=function(){
+    if(!S.job){alertWarn('尚未選擇職業，請回到封面選擇職業。');return;}
+    var d=S.meta.day;
+    if(S.leave[d]){alertWarn('今天已請假，無法上班。');return;}
+
+    var eff=S.effects[d]||{},fx=eff.fxHint||1;
+    Swal.fire({
+      title:'教師認證',
+      html:'工作：'+S.job.name+'<br>'
+          +'每次完成原始薪資約 $'+S.job.salary+'<br>'
+          +'體力 '+S.job.e+'｜心情 '+S.job.m+'<br>'
+          +'今日薪水倍率：<b>x '+fx.toFixed(2)+'</b>（系統已自動套用）',
+      input:'password',
+      inputPlaceholder:'請由老師輸入密碼',
+      showCancelButton:true,
+      confirmButtonText:'確認',
+      cancelButtonText:'取消'
+    }).then(function(pw){
+      if(!pw.isConfirmed)return;
+      if((pw.value||'').trim()!==TEACHER){alertError('教師密碼錯誤');return;}
+
+      if(S.job.id==='eng'){
+        Swal.fire({
+          title:'工程師薪資選擇',
+          html:'請選擇今日給薪方式：',
+          showDenyButton:true,
+          confirmButtonText:'底薪150＋獎金350（共500）',
+          denyButtonText:'僅給底薪 150'
+        }).then(function(ch){
+          var base, payNote;
+          if(ch.isDenied){base=S.job.base||150;payNote='（僅底薪）';}
+          else{base=(S.job.base||150)+(S.job.bonus||350);payNote='（底薪＋完成獎金）';}
+          var finalPay=applyFx(base,fx);
+          addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
+            note:'完成工作-'+S.job.name+payNote+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
+          beep('ding');
+          alertSuccess(
+            '💼 完成工作！<br>'
+            +'原始薪資：$'+base+' '+payNote+'<br>'
+            +'今日倍率：x '+fx.toFixed(2)+'<br>'
+            +'👉 系統實際入帳：<b>$'+finalPay+'</b><br>'
+            +'體力'+S.job.e+'，心情'+S.job.m+' 已記錄在後台。'
+          );
+        });
+      }else{
+        var base=S.job.salary;
+        var finalPay=applyFx(base,fx);
+        addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
+          note:'完成工作-'+S.job.name+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
+        beep('ding');
+        alertSuccess(
+          '💼 完成工作！<br>'
+          +'原始薪資：$'+base+'<br>'
+          +'今日倍率：x '+fx.toFixed(2)+'<br>'
+          +'👉 系統實際入帳：<b>$'+finalPay+'</b><br>'
+          +'體力'+S.job.e+'，心情'+S.job.m+' 已記錄在後台。'
+        );
+      }
+    });
+  };
+
+  // 抽卡
+  $('#btnDraw').onclick=function(){
+    var d=S.meta.day;
+    if(d!==1 && d!==3){alertWarn('只有第 1 天與第 3 天可以抽事件卡喔！');return;}
+    if(!canUse('draw'))return;
+    var isLucky=Math.random()<0.5;
+    var deck=isLucky?LUCKY:UNLUCKY;
+    var kind=isLucky?'幸運':'不幸';
+    var p=deck[Math.floor(Math.random()*deck.length)];
+    addSys({type:(p.amt>=0?'income':'expense'),cat:'event',amt:Math.abs(p.amt),e:p.e||0,m:p.m||0,note:kind+'：'+p.name});
+    used('draw');beep('card');
+    alertInfo(kind+'：'+p.name+'（'+(p.amt>=0?'+':'')+p.amt+'，體'+fmtSign(p.e||0)+' / 心'+fmtSign(p.m||0)+'）');
+  };
+
+  // 每日開始
+  function dayStart(first){
+    var d=S.meta.day;
+    $('#day').textContent=d;
+    beep('start');
+    if(!S.counters[d])S.counters[d]={food:0,fun:0,draw:0};
+    paintJobDesc();
+
+    var html='<h3>🌅 新的一天開始｜Day '+d+'</h3>'
+      +'<p>今天請完成以下事情：</p>'
+      +'<ul style="text-align:left;display:inline-block;">'
+      +'<li>① 做你的工作（或請假）→ 賺錢主要來源。</li>'
+      +'<li>② 選擇吃飯 1～3 次 → 補體力。</li>'
+      +'<li>③ 做 1～2 個休閒活動 → 加心情。</li>'
+      +'<li>④ 若是 Day1 或 Day3 → 可抽命運事件卡！</li>'
+      +'<li>⑤ 注意！Day2、Day4 會有強制花費，記得預留現金。</li>'
+      +'</ul>';
+
+    // 以「今天開始時」的狀態決定倍率（若前一天死亡 → 已重置成 100/100）
+    var prev=getStartStateForDay(d);
+    var fxHint=1,statusNote='';
+    if(prev.energy>110){fxHint*=1.5;statusNote+='💪 體力 &gt;110：薪水 1.5 倍。<br>';}
+    if(prev.energy<50){fxHint*=0.5;statusNote+='😵 體力 &lt;50（過勞）：薪水減半。<br>';}
+    if(prev.mood>110){fxHint*=1.5;statusNote+='😄 心情 &gt;110（非常快樂）：薪水 1.5 倍。<br>';}
+    if(prev.mood<30){fxHint*=0.5;statusNote+='😞 心情 &lt;30（心情低落）：薪水減半。<br>';}
+
+    S.effects[d]={fxHint:fxHint};save();
+    if(statusNote)html+='<hr><p>'+statusNote+'</p>';
+
+    if(S.deathDays && S.deathDays.indexOf(d-1)!==-1){
+      html+='<p>☠️ 昨天你有因為金錢或體力／心情歸 0 而「死亡重生」，<br>'
+           +'系統已將你重置為金錢 1000、體力 100、心情 100 再重新開始今天。</p>';
+    }
+
+    if(d===1||d===3)html+='<p>🎲 今天可以抽命運事件卡，建議抽 1～2 次。</p>';
+    if(d===2){
+      addSys({type:'expense',cat:'event',amt:250,e:0,m:0,note:'強制：繳班費'});
+      html+='<p>📌 今天會自動發生「繳班費」，請留意金錢變化（後台已扣 250）。</p>';
+    }
+    if(d===4){
+      addSys({type:'expense',cat:'event',amt:150,e:0,m:0,note:'強制：水電費／冷氣儲值'});
+      html+='<p>📌 今天會自動發生「水電費／冷氣儲值」，請留意金錢變化（後台已扣 150）。</p>';
+    }
+
+    var allowDraw=(d===1||d===3);
+    $('#drawBlock').classList.toggle('hidden',!allowDraw);
+
+    $('#alerts').innerHTML=html;
+    alertInfo(html+'<br><b>請確認自己今天要做哪些事，再開始行動！</b>');
+    updateStuBarsAndDash();
+    updateWorkButton();
+  }
+
+  function deathMsg(f){
+    if(f.e&&f.m&&f.$) return "☠️ 你太累、太煩又沒錢，整個人生暫時崩盤……重置狀態，死亡次數 +1。";
+    if(f.e&&f.m)      return "⚠️ 你因為身體過度疲勞又情緒崩潰，被緊急送醫休養，重置狀態並 +1 死亡次數。";
+    if(f.e&&f.$)      return "⚠️ 你因為體力透支又資金短缺，被迫暫停工作，重置狀態並 +1 死亡次數。";
+    if(f.m&&f.$)      return "💔 你因為情緒崩潰又陷入財務困境，被迫重新開始，死亡次數 +1。";
+    if(f.e)           return "⚠️ 你因為身體過度疲勞而昏倒，被緊急送醫治療。重置狀態，死亡次數 +1。";
+    if(f.m)           return "💔 你因為情緒崩潰，決定先好好休息。重置狀態，死亡次數 +1。";
+    return "💸 你的金錢出現赤字，無法支付日常開銷，被迫重新規劃。死亡次數 +1。";
+  }
+
+  // 結束一天（死亡判定：用「已考慮過去重置後」的當天結束狀態）
+  $('#endDay').onclick=function(){
+    var d=S.meta.day;
+    // 先算到今天結束（已把前幾天的死亡重置考慮進來）
+    var st=calcSysEndState(d);
+    var f={$:st.money<0,e:st.energy<=0,m:st.mood<=0};
+    if(f.$||f.e||f.m){
+      if(!S.deathDays)S.deathDays=[];
+      if(S.deathDays.indexOf(d)===-1)S.deathDays.push(d);
+      S.deathCount=(S.deathCount||0)+1;
+      save();
+      beep('dead');alertWarn(deathMsg(f));
+    }else{
+      beep('warn');alertInfo('🌙 今天結束了，辛苦了！');
+    }
+
+    if(S.meta.day<4){
+      S.meta.day++;save();dayStart(false);
+    }else{
+      nav('#page-summary');updateSummary(true);
+    }
+  };
+
+  function finalPayload(){
+    var id=key().replace(PFX+':','');
+    var sys=calcSysAllForPayload(),stu=calcStuUpTo(4);
+    return{
+      key:id,day:S.meta.day,
+      system:{money:Math.round(sys.money),energy:Math.round(sys.energy),mood:Math.round(sys.mood),deaths:sys.deaths},
+      student:{money:Math.round(stu.money),energy:Math.round(stu.energy),mood:Math.round(stu.mood),deaths:stu.deaths}
+    };
+  }
+
+  // 在明細表中標出「哪一天結束後有死亡重生」
+  function fillDetailTable(sel, src){
+    var tb = $(sel);
+    tb.innerHTML = '';
+    var deathDays = S.deathDays || [];
+    var markUsed = {};
+    for (var d = 1; d <= 4; d++) {
+      var arr = src[d] || [];
+      for (var i = 0; i < arr.length; i++) {
+        var t = arr[i];
+        var noteText = t.note || '';
+        if (deathDays.indexOf(d) !== -1 && !markUsed[d]) {
+          noteText += (noteText ? '｜' : '') + '【此日結束後死亡重生】';
+          markUsed[d] = true;
+        }
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + d + '</td>' +
+          '<td>' + (t.type === 'income' ? '收入' : '支出') + '</td>' +
+          '<td>' + transCat(t.cat) + '</td>' +
+          '<td class="right">' + t.amt + '</td>' +
+          '<td class="right">' + fmtSign(t.e) + '</td>' +
+          '<td class="right">' + fmtSign(t.m) + '</td>' +
+          '<td>' + noteText + '</td>';
+        tb.appendChild(tr);
+      }
+    }
+  }
+
+  function updateSummary(success){
+    var sys=calcSysAllForPayload(),stu=calcStuUpTo(4);
+    $('#smMoney').textContent=Math.round(sys.money);
+    $('#smE').textContent=Math.round(sys.energy);
+    $('#smM').textContent=Math.round(sys.mood);
+    $('#smD').textContent=sys.deaths;
+    $('#stMoney').textContent=Math.round(stu.money);
+    $('#stE').textContent=Math.round(stu.energy);
+    $('#stM').textContent=Math.round(stu.mood);
+    $('#stD').textContent=stu.deaths;
+
+    var diff=Math.abs(stu.money-sys.money);
+    var msg='你與系統金錢差距：$'+diff+'。';
+    if(diff<=50)msg+='🟢 記帳非常精準！';
+    else if(diff<=200)msg+='🟡 可能漏記了一些花費～';
+    else msg+='🔴 檢查是否遺漏事件或固定支出。';
+
+    var dd=(S.deathDays||[]).slice().sort(function(a,b){return a-b;});
+    var deadInfo=dd.length
+      ? '系統偵測死亡發生日：Day '+dd.join('、')+'。'
+      : '本次沒有系統偵測到死亡事件。';
+
+    $('#delta').textContent=msg+' '+deadInfo;
+
+    fillDetailTable('#sysTable tbody',S.tx_sys);
+    fillDetailTable('#stuTable tbody',S.tx_stu);
+
+    if(success){
+      alertSuccess('🎉 恭喜完成 4 天挑戰！<br>看看系統記錄 vs 你自己的記帳，有沒有很接近呢？');
+      beep('ding');setTimeout(function(){beep('ding');},200);
+    }
+  }
+
+  var sumBtn=document.querySelector('.sticky [data-nav="#page-summary"]');
+  sumBtn.onclick=function(){nav('#page-summary');updateSummary(false);};
+
+  function openForm(obj){
+    if(!S.formURL){alertWarn('老師尚未設定表單網址');return;}
+    window.open(S.formURL+encodeURIComponent(JSON.stringify(obj)),'_blank');
+  }
+  $('#sendEnd').onclick=function(){openForm(finalPayload());};
+  $('#copy').onclick=function(){
+    var txt=JSON.stringify(finalPayload());
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){alertSuccess('已複製 JSON，可貼到表單或老師端。');})
+      .catch(function(){alertInfo(txt);});
+    }else alertInfo(txt);
+  };
+
+  $('#tun').onclick=function(){
+    if(($('#tpw').value||'').trim()===TEACHER){$('#tTools').classList.remove('hidden');}
+    else alertError('教師碼錯誤');
+  };
+  $('#saveForm').onclick=function(){
+    S.formURL=($('#formURL').value||'').trim();save();
+    $('#formSaved').textContent=S.formURL?'已設定':'—';
+  };
+  $('#parse').onclick=function(){
+    var tb=$('#aggT tbody');tb.innerHTML='';
+    var lines=($('#agg').value||'').split(/\n+/);
+    lines=lines.map(function(s){return s.trim();}).filter(function(s){return s;});
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i];
+      try{
+        var j=JSON.parse(line),sys=j.system||{},stu=j.student||{};
+        var tr=document.createElement('tr');
+        tr.innerHTML='<td>'+j.key+'</td><td>'+(j.day||'')+'</td>'
+          +'<td>'+(sys.money||'')+'</td><td>'+(stu.money||'')+'</td>'
+          +'<td>'+(sys.energy||'')+'</td><td>'+(stu.energy||'')+'</td>'
+          +'<td>'+(sys.mood||'')+'</td><td>'+(stu.mood||'')+'</td>'
+          +'<td>'+(sys.deaths||'')+'</td><td>'+(stu.deaths||'')+'</td>';
+        tb.appendChild(tr);
+      }catch(e){
+        var tr2=document.createElement('tr');
+        tr2.innerHTML='<td colspan="10">❌ 無法解析：'+line+'</td>';
+        tb.appendChild(tr2);
+      }
+    }
+  };
+  $('#csvAll').onclick=function(){
+    var lines=($('#agg').value||'').split(/\n+/);
+    lines=lines.map(function(s){return s.trim();}).filter(function(s){return s;});
+    if(!lines.length){alertWarn('請先貼上並解析學生 JSON');return;}
+    var rows=[["student","day","sys_money","stu_money","sys_energy","stu_energy","sys_mood","stu_mood","sys_deaths","stu_deaths"]];
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i];
+      try{
+        var j=JSON.parse(line),sys=j.system||{},stu=j.student||{};
+        rows.push([j.key||'',j.day||'',sys.money||'',stu.money||'',sys.energy||'',stu.energy||'',sys.mood||'',stu.mood||'',sys.deaths||'',stu.deaths||'']);
+      }catch(e){rows.push(["BAD:"+line]);}
+    }
+    var csv=rows.map(function(r){
+      return r.map(function(v){var s=String(v).replace(/"/g,'""');return '"'+s+'"';}).join(',');
+    }).join('\n');
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download='class-summary-v60.csv';a.click();
+  };
+
+  $$('.sticky [data-nav]').forEach(function(b){
+    var target=b.getAttribute('data-nav');
+    if(target!=='#page-summary'){
+      b.onclick=function(){nav(target);};
+    }
+  });
+  function boot(){var h=location.hash||'#page-cover';nav(h);}
+  window.addEventListener('hashchange',boot);boot();
+
+  // 嘗試載入最近一次的學生
+  (function(){
+    var keys=[],i;
+    for(i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k.indexOf(PFX+':')===0)keys.push(k);
+    }
+    if(keys.length){
+      keys.sort();load(keys[keys.length-1]);
+      $('#klass').value=S.meta.klass||'';
+      $('#no').value=S.meta.no||'';
+      $('#name').value=S.meta.name||'';
+      $('#who').textContent=S.meta.name?(S.meta.klass+"-"+S.meta.no+"-"+S.meta.name):'未登入';
+      $('#sid').textContent=key();
+      if(!S.deathCount)S.deathCount=0;
+      if(!S.deathDays)S.deathDays=[];
+      if(S.job){
+        $('#job').value=S.job.id;
+        paintJobDesc();
+      }
+    }
+  })();
+
+})();
+</script>
+
+</body>
+</html>
