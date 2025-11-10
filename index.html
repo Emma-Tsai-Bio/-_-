@@ -759,28 +759,73 @@
       +'金額：0；體力 +10；心情 +20。');
   };
 
-  // 粉絲贈禮（黑紅大網紅，且當天不是無薪假）
-  $('#giftBtn').onclick=function(){
-    if(!S.job || S.job.id!=='mega'){
-      alertWarn('只有「黑紅大網紅」可以使用粉絲贈禮喔！');
-      return;
-    }
-    var d=S.meta.day;
-    if(S.leave && S.leave[d]==='unpaid'){
-      alertWarn('今天你請了「無薪假」，粉絲們也暫時沒有斗內喔～<br>明天努力工作，再看看粉絲有沒有送禮物吧！');
-      return;
-    }
-    var gifts=Math.floor(Math.random()*11); // 0–10
-    var total=gifts*20;
-    if(gifts===0){
-      alertInfo('今天暫時沒有粉絲斗內，明天再接再厲！');
-      return;
-    }
-    addSys({type:'income',cat:'event',amt:total,e:0,m:0,note:'粉絲贈禮 '+gifts+' 個'});
-    beep('ding');
-    alertSuccess('恭喜你～獲得粉絲斗內 <b>'+gifts+'</b> 個禮物，總共獲得 <b>'+total+'</b> 元！');
-  };
+// =====================
+// 🎁 粉絲贈禮（黑紅大網紅專屬，每日僅可領一次）
+// =====================
+let giftUsed = {}; // 紀錄每天是否已領取過
 
+$('#giftBtn').onclick = function () {
+  if (!S.job || S.job.id !== 'mega') {
+    alertWarn('只有「黑紅大網紅」可以使用粉絲贈禮喔！');
+    return;
+  }
+
+  const day = S.meta.day;
+
+  // 檢查是否請了無薪假
+  if (S.leave && S.leave[day] === 'unpaid') {
+    alertWarn('今天你請了「無薪假」，粉絲們也暫時沒有斗內喔～\n明天努力工作，再看看粉絲有沒有送禮物吧！');
+    return;
+  }
+
+  // 若今日已領過一次
+  if (giftUsed[day]) {
+    alertInfo('🎀 今天粉絲已經送過禮物囉，明天再看看有沒有新斗內！');
+    return;
+  }
+
+  // 領取粉絲禮物
+  const gifts = Math.floor(Math.random() * 11); // 0~10 個
+  const total = gifts * 20;
+  giftUsed[day] = true; // 標記為已使用
+
+  // 沒有粉絲贈禮
+  if (gifts === 0) {
+    alertInfo('今天暫時沒有粉絲斗內，明天再接再厲！');
+    return;
+  }
+
+  // 寫入系統交易紀錄
+  addSys({
+    type: 'income',
+    cat: 'event',
+    amt: total,
+    e: 0,
+    m: 0,
+    note: '粉絲贈禮 ' + gifts + ' 個'
+  });
+
+  beep('ding');
+  alertSuccess(
+    `🎉 恭喜你～獲得粉絲斗內 <b>${gifts}</b> 個禮物，總共獲得 <b>${total}</b> 元！`
+  );
+
+  // 禁用按鈕（視覺效果）
+  const btn = $('#giftBtn');
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  btn.textContent = '今日已領取 🎁';
+
+  // 隔天恢復
+  setTimeout(() => {
+    if (S.meta.day !== day) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = '粉絲贈禮 🎁';
+      giftUsed[day] = false;
+    }
+  }, 3000);
+};
   // 餐食
   $('#food0').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:0,e:-20,m:-15,note:'不吃飯'});used('food');beep('cash');alertInfo('🍽 不吃飯 → 體-20 / 心-15');};
   $('#food1').onclick=function(){if(!canUse('food'))return;if(!canUse('fun'))return;addSys({type:'expense',cat:'food',amt:100,e:+20,m:+10,note:'自己備餐'});used('food');used('fun');beep('cash');alertInfo('🍱 自己備餐 -100，體+20 / 心+10（同時占用 1 次休閒額度）');};
