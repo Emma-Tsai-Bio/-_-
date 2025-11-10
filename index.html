@@ -841,91 +841,132 @@
 
   function applyFx(base,fx){return Math.round(base*fx);}
 
-  // 工作（含工程師底薪/全薪＋倍率；目前不限制次數，由老師實際控管）
-  $('#work').onclick=function(){
-    if(!S.job){alertWarn('尚未選擇職業，請回到封面選擇職業。');return;}
-    var d=S.meta.day;
-    if(S.leave[d]){alertWarn('今天已請假，無法上班。');return;}
+ // =====================
+// 💼 完成工作（每日僅可執行一次）
+// =====================
+let workUsed = {}; // 記錄每天是否已上班
 
-    var eff=S.effects[d]||{},fx=eff.fxHint||1;
-    Swal.fire({
-      title:'教師認證',
-      html:'工作：'+S.job.name+'<br>'
-          +'每次完成原始薪資約 $'+S.job.salary+'<br>'
-          +'體力 '+S.job.e+'｜心情 '+S.job.m+'<br>'
-          +'今日薪水倍率：<b>x '+fx.toFixed(2)+'</b>（系統已自動套用）',
-      input:'password',
-      inputPlaceholder:'請由老師輸入密碼',
-      showCancelButton:true,
-      confirmButtonText:'確認',
-      cancelButtonText:'取消'
-    }).then(function(pw){
-      if(!pw.isConfirmed)return;
-      if((pw.value||'').trim()!==TEACHER){alertError('教師密碼錯誤');return;}
+$('#work').onclick = function () {
+  if (!S.job) {
+    alertWarn('尚未選擇職業，請回到封面選擇職業。');
+    return;
+  }
 
-      if(S.job.id==='eng'){
-        Swal.fire({
-          title:'工程師薪資選擇',
-          html:'請選擇今日給薪方式：',
-          showDenyButton:true,
-          confirmButtonText:'底薪150＋獎金350（共500）',
-          denyButtonText:'僅給底薪 150'
-        }).then(function(ch){
-          var base, payNote;
-          if(ch.isDenied){base=S.job.base||150;payNote='（僅底薪）';}
-          else{base=(S.job.base||150)+(S.job.bonus||350);payNote='（底薪＋完成獎金）';}
-          var finalPay=applyFx(base,fx);
-          addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
-            note:'完成工作-'+S.job.name+payNote+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
-          beep('ding');
-          alertSuccess(
-            '💼 完成工作！<br>'
-            +'原始薪資：$'+base+' '+payNote+'<br>'
-            +'今日倍率：x '+fx.toFixed(2)+'<br>'
-            +'👉 系統實際入帳：<b>$'+finalPay+'</b><br>'
-            +'體力'+S.job.e+'，心情'+S.job.m+' 已記錄在後台。'
-          );
+  const d = S.meta.day;
+
+  // 若已請假
+  if (S.leave[d]) {
+    alertWarn('今天已請假，無法上班。');
+    return;
+  }
+
+  // 若當天已工作過
+  if (workUsed[d]) {
+    alertInfo('🕓 今天你已經完成工作囉，明天再繼續努力！');
+    return;
+  }
+
+  // 開始教師驗證流程
+  Swal.fire({
+    title: '教師認證',
+    html: '工作：' + S.job.name + '<br>'
+        + '每次完成原始薪資約 $' + S.job.salary + '<br>'
+        + '體力 ' + S.job.e + '｜心情 ' + S.job.m + '<br>'
+        + '（今日薪水倍率系統已自動套用）',
+    input: 'password',
+    inputPlaceholder: '請由老師輸入密碼',
+    showCancelButton: true,
+    confirmButtonText: '確認',
+    cancelButtonText: '取消'
+  }).then(function (pw) {
+    if (!pw.isConfirmed) return;
+    if ((pw.value || '').trim() !== TEACHER) {
+      alertError('教師密碼錯誤');
+      return;
+    }
+
+    const fx = (S.effects[d] && S.effects[d].fxHint) || 1;
+
+    // 處理不同職業薪資邏輯
+    if (S.job.id === 'eng') {
+      Swal.fire({
+        title: '工程師薪資選擇',
+        html: '請選擇今日給薪方式：',
+        showDenyButton: true,
+        confirmButtonText: '底薪150＋獎金350（共500）',
+        denyButtonText: '僅給底薪 150'
+      }).then(function (ch) {
+        let base, payNote;
+        if (ch.isDenied) {
+          base = S.job.base || 150;
+          payNote = '（僅底薪）';
+        } else {
+          base = (S.job.base || 150) + (S.job.bonus || 350);
+          payNote = '（底薪＋完成獎金）';
+        }
+        const finalPay = Math.round(base * fx);
+        addSys({
+          type: 'income',
+          cat: 'salary',
+          amt: finalPay,
+          e: S.job.e,
+          m: S.job.m,
+          note:
+            '完成工作-' + S.job.name + payNote +
+            '｜原始 ' + base + ' ×' + fx.toFixed(2) + ' → 實際 ' + finalPay
         });
-      }else{
-        var base=S.job.salary;
-        var finalPay=applyFx(base,fx);
-        addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
-          note:'完成工作-'+S.job.name+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
         beep('ding');
         alertSuccess(
           '💼 完成工作！<br>'
-          +'原始薪資：$'+base+'<br>'
-          +'今日倍率：x '+fx.toFixed(2)+'<br>'
-          +'👉 系統實際入帳：<b>$'+finalPay+'</b><br>'
-          +'體力'+S.job.e+'，心情'+S.job.m+' 已記錄在後台。'
+          + '原始薪資：$' + base + payNote + '<br>'
+          + '今日倍率：x ' + fx.toFixed(2) + '<br>'
+          + '👉 實際入帳：<b>$' + finalPay + '</b><br>'
+          + '體力' + S.job.e + '、心情' + S.job.m + ' 已記錄。'
         );
-      }
-    });
-  };
+        workUsed[d] = true;
+        $('#work').disabled = true;
+        $('#work').style.opacity = '0.6';
+        $('#work').textContent = '今日已完成工作 💼';
+      });
 
-  // 抽卡
-  $('#btnDraw').onclick=function(){
-    var d=S.meta.day;
-    if(d!==1 && d!==3){alertWarn('只有第 1 天與第 3 天可以抽事件卡喔！');return;}
-    if(!canUse('draw'))return;
-    var isLucky=Math.random()<0.5;
-    var deck=isLucky?LUCKY:UNLUCKY;
-    var kind=isLucky?'幸運':'不幸';
-    var p=deck[Math.floor(Math.random()*deck.length)];
-    addSys({type:(p.amt>=0?'income':'expense'),cat:'event',amt:Math.abs(p.amt),e:p.e||0,m:p.m||0,note:kind+'：'+p.name});
-    used('draw');beep('card');
-    alertInfo(kind+'：'+p.name+'（'+(p.amt>=0?'+':'')+p.amt+'，體'+fmtSign(p.e||0)+' / 心'+fmtSign(p.m||0)+'）');
-  };
+    } else {
+      const base = S.job.salary;
+      const finalPay = Math.round(base * fx);
+      addSys({
+        type: 'income',
+        cat: 'salary',
+        amt: finalPay,
+        e: S.job.e,
+        m: S.job.m,
+        note:
+          '完成工作-' + S.job.name +
+          '｜原始 ' + base + ' ×' + fx.toFixed(2) + ' → 實際 ' + finalPay
+      });
+      beep('ding');
+      alertSuccess(
+        '💼 完成工作！<br>'
+        + '原始薪資：$' + base + '<br>'
+        + '今日倍率：x ' + fx.toFixed(2) + '<br>'
+        + '👉 實際入帳：<b>$' + finalPay + '</b><br>'
+        + '體力' + S.job.e + '、心情' + S.job.m + ' 已記錄。'
+      );
+      workUsed[d] = true;
+      $('#work').disabled = true;
+      $('#work').style.opacity = '0.6';
+      $('#work').textContent = '今日已完成工作 💼';
+    }
+  });
+};
 
-  function deathMsg(f){
-    if(f.e&&f.m&&f.$) return "☠️ 你太累、太煩又沒錢，整個人生暫時崩盤……重置狀態，死亡次數 +1。";
-    if(f.e&&f.m)      return "⚠️ 你因為身體過度疲勞又情緒崩潰，被緊急送醫休養，重置狀態並 +1 死亡次數。";
-    if(f.e&&f.$)      return "⚠️ 你因為體力透支又資金短缺，被迫暫停工作，重置狀態並 +1 死亡次數。";
-    if(f.m&&f.$)      return "💔 你因為情緒崩潰又陷入財務困境，被迫重新開始，死亡次數 +1。";
-    if(f.e)           return "⚠️ 你因為身體過度疲勞而昏倒，被緊急送醫治療。重置狀態，死亡次數 +1。";
-    if(f.m)           return "💔 你因為情緒崩潰，決定先好好休息。重置狀態，死亡次數 +1。";
-    return "💸 你的金錢出現赤字，無法支付日常開銷，被迫重新規劃。死亡次數 +1。";
-  }
+// 🔁 每日換天時重置工作次數
+function resetWorkButtonForNewDay() {
+  const d = S.meta.day;
+  $('#work').disabled = false;
+  $('#work').style.opacity = '1';
+  $('#work').textContent = '完成工作（教師認證）';
+  workUsed[d] = false;
+}
+
 
   // 每日開始
   function dayStart(first){
