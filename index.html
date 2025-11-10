@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>好漾人生｜雙中模擬市民 v6.0</title>
+  <title>好漾人生｜雙中模擬市民 v6.x</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root{
@@ -49,7 +49,7 @@
 
 <header>
   <div class="row">
-    <strong>好漾人生｜雙中模擬市民 v6.0</strong>
+    <strong>好漾人生｜雙中模擬市民</strong>
     <span id="who" class="badge">未登入</span>
   </div>
   <div class="row">
@@ -490,6 +490,9 @@
     deathDays:[]
   };
 
+  // 粉絲贈禮每日使用紀錄（依天數）
+  var giftUsed = {1:false,2:false,3:false,4:false};
+
   function key(){return PFX+":"+(S.meta.klass||'NA')+"-"+(S.meta.no||'NA')+"-"+(S.meta.name||'NA');}
   function save(){try{localStorage.setItem(key(),JSON.stringify(S));}catch(e){}}
   function load(k){var s=localStorage.getItem(k);if(s){try{S=JSON.parse(s);}catch(e){}}}
@@ -564,6 +567,7 @@
     S.leavePaidUsed=0;
     S.deathCount=0;
     S.deathDays=[];
+    giftUsed={1:false,2:false,3:false,4:false};
     $('#who').textContent=S.meta.name?(S.meta.klass+"-"+S.meta.no+"-"+S.meta.name):'未登入';
     $('#sid').textContent=key();
     if(!S.job && jobSel.value){
@@ -684,7 +688,6 @@
         energy+=t.e||0;
         mood+=t.m||0;
       }
-      // 只對「之前已經登記過的死亡日且小於 day」做重置
       if(deaths.indexOf(d)!==-1 && d<day){
         money=1000;energy=100;mood=100;
       }
@@ -692,7 +695,6 @@
     return {money:money,energy:energy,mood:mood};
   }
 
-  // 某天開始時的狀態（若前一天死亡，則從 1000/100/100 開始）
   function getStartStateForDay(d){
     if(d===1)return{money:1000,energy:100,mood:100};
     var prevDay=d-1;
@@ -734,6 +736,7 @@
   function updateWorkButton(){
     var d=S.meta.day,leave=S.leave[d];
     $('#work').disabled=!!leave;
+    if(leave)$('#work').style.opacity='0.6';else $('#work').style.opacity='1';
   }
 
   // 請假
@@ -759,73 +762,69 @@
       +'金額：0；體力 +10；心情 +20。');
   };
 
-// =====================
-// 🎁 粉絲贈禮（黑紅大網紅專屬，每日僅可領一次）
-// =====================
-let giftUsed = {}; // 紀錄每天是否已領取過
-
-$('#giftBtn').onclick = function () {
-  if (!S.job || S.job.id !== 'mega') {
-    alertWarn('只有「黑紅大網紅」可以使用粉絲贈禮喔！');
-    return;
-  }
-
-  const day = S.meta.day;
-
-  // 檢查是否請了無薪假
-  if (S.leave && S.leave[day] === 'unpaid') {
-    alertWarn('今天你請了「無薪假」，粉絲們也暫時沒有斗內喔～\n明天努力工作，再看看粉絲有沒有送禮物吧！');
-    return;
-  }
-
-  // 若今日已領過一次
-  if (giftUsed[day]) {
-    alertInfo('🎀 今天粉絲已經送過禮物囉，明天再看看有沒有新斗內！');
-    return;
-  }
-
-  // 領取粉絲禮物
-  const gifts = Math.floor(Math.random() * 11); // 0~10 個
-  const total = gifts * 20;
-  giftUsed[day] = true; // 標記為已使用
-
-  // 沒有粉絲贈禮
-  if (gifts === 0) {
-    alertInfo('今天暫時沒有粉絲斗內，明天再接再厲！');
-    return;
-  }
-
-  // 寫入系統交易紀錄
-  addSys({
-    type: 'income',
-    cat: 'event',
-    amt: total,
-    e: 0,
-    m: 0,
-    note: '粉絲贈禮 ' + gifts + ' 個'
-  });
-
-  beep('ding');
-  alertSuccess(
-    `🎉 恭喜你～獲得粉絲斗內 <b>${gifts}</b> 個禮物，總共獲得 <b>${total}</b> 元！`
-  );
-
-  // 禁用按鈕（視覺效果）
-  const btn = $('#giftBtn');
-  btn.disabled = true;
-  btn.style.opacity = '0.6';
-  btn.textContent = '今日已領取 🎁';
-
-  // 隔天恢復
-  setTimeout(() => {
-    if (S.meta.day !== day) {
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      btn.textContent = '粉絲贈禮 🎁';
-      giftUsed[day] = false;
+  // 🎁 粉絲贈禮（黑紅大網紅，每日一次，無薪假當天禁止）
+  function updateGiftButtonForDay(){
+    var d=S.meta.day;
+    var btn=$('#giftBtn');
+    if(!S.job || S.job.id!=='mega'){
+      btn.classList.add('hidden');
+      return;
     }
-  }, 3000);
-};
+    btn.classList.remove('hidden');
+    if(giftUsed[d]){
+      btn.disabled=true;
+      btn.style.opacity='0.6';
+      btn.textContent='今日已領取 🎁';
+    }else{
+      btn.disabled=false;
+      btn.style.opacity='1';
+      btn.textContent='粉絲贈禮（大網紅）';
+    }
+  }
+
+  $('#giftBtn').onclick=function(){
+    if(!S.job || S.job.id!=='mega'){
+      alertWarn('只有「黑紅大網紅」可以使用粉絲贈禮喔！');
+      return;
+    }
+    var d=S.meta.day;
+
+    if(S.leave && S.leave[d]==='unpaid'){
+      alertWarn('今天你請了「無薪假」，粉絲們也暫時沒有斗內喔～<br>明天努力工作，再看看粉絲有沒有送禮物吧！');
+      return;
+    }
+
+    if(giftUsed[d]){
+      alertInfo('🎀 今天粉絲已經送過禮物囉，明天再看看有沒有新斗內！');
+      return;
+    }
+
+    // 標記今天已使用，不論有沒有抽到禮物
+    giftUsed[d]=true;
+
+    var gifts=Math.floor(Math.random()*11); // 0–10 個
+    var total=gifts*20;
+
+    if(gifts===0){
+      updateGiftButtonForDay();
+      alertInfo('今天暫時沒有粉絲斗內，明天再接再厲！');
+      return;
+    }
+
+    addSys({
+      type:'income',
+      cat:'event',
+      amt:total,
+      e:0,
+      m:0,
+      note:'粉絲贈禮 '+gifts+' 個'
+    });
+
+    beep('ding');
+    alertSuccess('恭喜你～獲得粉絲斗內 <b>'+gifts+'</b> 個禮物，總共獲得 <b>'+total+'</b> 元！');
+    updateGiftButtonForDay();
+  };
+
   // 餐食
   $('#food0').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:0,e:-20,m:-15,note:'不吃飯'});used('food');beep('cash');alertInfo('🍽 不吃飯 → 體-20 / 心-15');};
   $('#food1').onclick=function(){if(!canUse('food'))return;if(!canUse('fun'))return;addSys({type:'expense',cat:'food',amt:100,e:+20,m:+10,note:'自己備餐'});used('food');used('fun');beep('cash');alertInfo('🍱 自己備餐 -100，體+20 / 心+10（同時占用 1 次休閒額度）');};
@@ -842,7 +841,7 @@ $('#giftBtn').onclick = function () {
 
   function applyFx(base,fx){return Math.round(base*fx);}
 
-  // 工作（含工程師底薪/全薪＋倍率）
+  // 工作（含工程師底薪/全薪＋倍率；目前不限制次數，由老師實際控管）
   $('#work').onclick=function(){
     if(!S.job){alertWarn('尚未選擇職業，請回到封面選擇職業。');return;}
     var d=S.meta.day;
@@ -918,6 +917,16 @@ $('#giftBtn').onclick = function () {
     alertInfo(kind+'：'+p.name+'（'+(p.amt>=0?'+':'')+p.amt+'，體'+fmtSign(p.e||0)+' / 心'+fmtSign(p.m||0)+'）');
   };
 
+  function deathMsg(f){
+    if(f.e&&f.m&&f.$) return "☠️ 你太累、太煩又沒錢，整個人生暫時崩盤……重置狀態，死亡次數 +1。";
+    if(f.e&&f.m)      return "⚠️ 你因為身體過度疲勞又情緒崩潰，被緊急送醫休養，重置狀態並 +1 死亡次數。";
+    if(f.e&&f.$)      return "⚠️ 你因為體力透支又資金短缺，被迫暫停工作，重置狀態並 +1 死亡次數。";
+    if(f.m&&f.$)      return "💔 你因為情緒崩潰又陷入財務困境，被迫重新開始，死亡次數 +1。";
+    if(f.e)           return "⚠️ 你因為身體過度疲勞而昏倒，被緊急送醫治療。重置狀態，死亡次數 +1。";
+    if(f.m)           return "💔 你因為情緒崩潰，決定先好好休息。重置狀態，死亡次數 +1。";
+    return "💸 你的金錢出現赤字，無法支付日常開銷，被迫重新規劃。死亡次數 +1。";
+  }
+
   // 每日開始
   function dayStart(first){
     var d=S.meta.day;
@@ -936,7 +945,6 @@ $('#giftBtn').onclick = function () {
       +'<li>⑤ 注意！Day2、Day4 會有強制花費，記得預留現金。</li>'
       +'</ul>';
 
-    // 以「今天開始時」的狀態決定倍率（若前一天死亡 → 已重置成 100/100）
     var prev=getStartStateForDay(d);
     var fxHint=1,statusNote='';
     if(prev.energy>110){fxHint*=1.5;statusNote+='💪 體力 &gt;110：薪水 1.5 倍。<br>';}
@@ -969,22 +977,12 @@ $('#giftBtn').onclick = function () {
     alertInfo(html+'<br><b>請確認自己今天要做哪些事，再開始行動！</b>');
     updateStuBarsAndDash();
     updateWorkButton();
+    updateGiftButtonForDay();
   }
 
-  function deathMsg(f){
-    if(f.e&&f.m&&f.$) return "☠️ 你太累、太煩又沒錢，整個人生暫時崩盤……重置狀態，死亡次數 +1。";
-    if(f.e&&f.m)      return "⚠️ 你因為身體過度疲勞又情緒崩潰，被緊急送醫休養，重置狀態並 +1 死亡次數。";
-    if(f.e&&f.$)      return "⚠️ 你因為體力透支又資金短缺，被迫暫停工作，重置狀態並 +1 死亡次數。";
-    if(f.m&&f.$)      return "💔 你因為情緒崩潰又陷入財務困境，被迫重新開始，死亡次數 +1。";
-    if(f.e)           return "⚠️ 你因為身體過度疲勞而昏倒，被緊急送醫治療。重置狀態，死亡次數 +1。";
-    if(f.m)           return "💔 你因為情緒崩潰，決定先好好休息。重置狀態，死亡次數 +1。";
-    return "💸 你的金錢出現赤字，無法支付日常開銷，被迫重新規劃。死亡次數 +1。";
-  }
-
-  // 結束一天（死亡判定：用「已考慮過去重置後」的當天結束狀態）
+  // 結束一天
   $('#endDay').onclick=function(){
     var d=S.meta.day;
-    // 先算到今天結束（已把前幾天的死亡重置考慮進來）
     var st=calcSysEndState(d);
     var f={$:st.money<0,e:st.energy<=0,m:st.mood<=0};
     if(f.$||f.e||f.m){
@@ -1014,7 +1012,6 @@ $('#giftBtn').onclick = function () {
     };
   }
 
-  // 在明細表中標出「哪一天結束後有死亡重生」
   function fillDetailTable(sel, src){
     var tb = $(sel);
     tb.innerHTML = '';
