@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>好漾人生｜雙中模擬市民 v6.reset</title>
+  <title>好漾人生｜雙中模擬市民 v6.reset+hint</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root{
@@ -134,6 +134,18 @@
       <p class="note">＊實際發放玩具鈔時，老師也可以參考此倍率。</p>
     </div>
 
+    <!-- 🧾 規則頁也放記帳提醒 -->
+    <div class="card">
+      <h3 class="h4">🧾 記帳規則說明</h3>
+      <p class="note">
+        每完成一件事情（工作、餐食、休閒、借款／還款、事件卡、強制支出⋯），<br>
+        請在「記帳」頁的面板中自己輸入：<br>
+        💰 金額 ＋ ❤️ 體力變化 ＋ 😊 心情變化。<br><br>
+        系統會在後台暗中記錄真實數值，<br>
+        直到第 4 天結束時才一次秀出，和你的記帳做比較。
+      </p>
+    </div>
+
     <button id="toRecord" class="primary">去記帳 ▶</button>
   </section>
 
@@ -195,6 +207,14 @@
             <button id="fun3" class="good">運動（錢-10 / 體-25 / 心+15）</button>
             <button id="fun4" class="good">畫畫／讀書（錢-100 / 體-5 / 心+10）</button>
           </div>
+
+          <!-- 🕒 最近系統紀錄 -->
+          <div class="card" style="margin-top:8px;">
+            <div class="h4">🕒 最近 2 筆系統紀錄</div>
+            <p id="quickLog" class="note">
+              目前尚未有系統紀錄。當你按上面的快捷鍵或遇到強制支出時，這裡會顯示最近兩筆後台紀錄（只讀）。
+            </p>
+          </div>
         </div>
 
         <!-- 右：餐食＋抽卡 -->
@@ -226,6 +246,11 @@
     <div class="card">
       <div class="h4">🧾 記帳與今日明細</div>
       <div id="jobRule" class="note" style="margin-bottom:6px;">職業：—</div>
+      <p class="note">
+        🧮 每完成一件事（工作、餐食、休閒、借款／還款等），請在下方記帳面板自己輸入：<br>
+        金額＋體力變化＋心情變化。<br>
+        系統會在後台暗中計算真實數值，結算時才會顯示結果。
+      </p>
       <div class="grid-2">
         <div>
           <div class="row">
@@ -413,14 +438,15 @@
   function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
   var PFX="hy-young-v60";
   var TEACHER="127";
+  var FORMKEY = PFX + ":CFG:FORM";   // 老師表單設定專用 key
 
-  // 一進來就清掉之前所有這個遊戲的記錄（只清本遊戲前綴）
+  // 一進來就清掉之前所有「學生遊戲紀錄」，但保留老師設定
   (function clearOldStorage(){
     try{
       var toDel = [];
       for(var i=0;i<localStorage.length;i++){
         var k = localStorage.key(i);
-        if(k.indexOf(PFX+':') === 0){
+        if(k.indexOf(PFX+':') === 0 && k !== FORMKEY){
           toDel.push(k);
         }
       }
@@ -503,6 +529,20 @@
     deathCount:0,
     deathDays:[]
   };
+
+  // 一進來先讀取老師之前設定過的表單網址
+  (function loadFormConfig(){
+    try{
+      var f = localStorage.getItem(FORMKEY) || '';
+      if(f){
+        S.formURL = f;
+        var inp = document.querySelector('#formURL');
+        var lab = document.querySelector('#formSaved');
+        if(inp) inp.value = f;
+        if(lab) lab.textContent = '已設定';
+      }
+    }catch(e){}
+  })();
 
   // 大網紅粉絲禮物每日使用狀態
   var giftUsed={1:false,2:false,3:false,4:false};
@@ -657,11 +697,31 @@
     }
   };
 
+  // 🕒 最近 2 筆系統紀錄（後台）
+  function updateQuickLog(){
+    var d=S.meta.day;
+    var arr=S.tx_sys[d]||[];
+    if(!arr.length){
+      $('#quickLog').textContent='目前尚未有系統紀錄。當你按上面的快捷鍵或遇到強制支出時，這裡會顯示最近兩筆後台紀錄（只讀）。';
+      return;
+    }
+    var sorted=arr.slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);}).slice(0,2);
+    var lines=sorted.map(function(t){
+      var kind=t.type==='income'?'收入':'支出';
+      return 'Day '+d+'｜'+kind+'｜'+transCat(t.cat)+'｜$'+t.amt
+             +'｜體'+fmtSign(t.e||0)+'｜心'+fmtSign(t.m||0)
+             +(t.note?('｜'+t.note):'');
+    });
+    $('#quickLog').innerHTML=lines.join('<br>');
+  }
+
   // 後台系統帳
   function addSys(t){
     var d=S.meta.day;
     if(!S.tx_sys[d])S.tx_sys[d]=[];
+    if(!t.ts)t.ts=Date.now();
     S.tx_sys[d].push(t);save();
+    updateQuickLog();
   }
 
   function calcStuUpTo(day){
@@ -750,7 +810,7 @@
     S.counters[d][kind]++;save();
   }
 
-  // 工作按鈕狀態：考慮請假＋今日是否已完成工作
+  // 工作按鈕狀態
   function updateWorkButton(){
     var d=S.meta.day,leave=S.leave[d],used=workUsed[d];
     var btn=$('#work');
@@ -791,7 +851,7 @@
       +'金額：0；體力 +10；心情 +20。');
   };
 
-  // 粉絲贈禮按鈕狀態：要黑紅大網紅＋已完成工作＋非無薪假＋當日未領過
+  // 粉絲贈禮按鈕狀態
   function updateGiftButtonForDay(){
     var d=S.meta.day;
     var btn=$('#giftBtn');
@@ -837,7 +897,7 @@
       return;
     }
     if(!workUsed[d]){
-      alertWarn('今天還沒完成工作，粉絲還在觀望呢～\n請先完成「今日工作」，再來看有沒有粉絲送禮物吧！');
+      alertWarn('今天還沒完成工作，粉絲還在觀望呢～<br>請先完成「今日工作」，再來看有沒有粉絲送禮物吧！');
       return;
     }
     if(giftUsed[d]){
@@ -981,6 +1041,7 @@
     return "💸 你的金錢出現赤字，無法支付日常開銷，被迫重新規劃。死亡次數 +1。";
   }
 
+  // 🌅 每天開始
   function dayStart(first){
     var d=S.meta.day;
     $('#day').textContent=d;
@@ -988,8 +1049,19 @@
     if(!S.counters[d])S.counters[d]={food:0,fun:0,draw:0};
     paintJobDesc();
 
-    var html='<h3>🌅 新的一天開始｜Day '+d+'</h3>'
-      +'<p>今天請完成以下事情：</p>'
+    var diedYesterday = S.deathDays && S.deathDays.indexOf(d-1)!==-1;
+    var title = diedYesterday
+      ? '☠️ 死亡重生後的新一天｜Day '+d
+      : '🌅 新的一天開始｜Day '+d;
+
+    var html='<h3>'+title+'</h3>';
+
+    if(diedYesterday){
+      html+='<p>昨天因為金錢或體力／心情歸 0 而「死亡重生」，<br>'
+           +'今天一開始你被重置為：金錢 1000、體力 100、心情 100，請好好規劃新的一天。</p>';
+    }
+
+    html+='<p>今天請完成以下事情：</p>'
       +'<ul style="text-align:left;display:inline-block;">'
       +'<li>① 做你的工作（或請假）→ 賺錢主要來源。</li>'
       +'<li>② 選擇吃飯 1～3 次 → 補體力。</li>'
@@ -1008,10 +1080,10 @@
     S.effects[d]={fxHint:fxHint};save();
     if(statusNote)html+='<hr><p>'+statusNote+'</p>';
 
-    if(S.deathDays && S.deathDays.indexOf(d-1)!==-1){
-      html+='<p>☠️ 昨天你有因為金錢或體力／心情歸 0 而「死亡重生」，<br>'
-           +'系統已將你重置為金錢 1000、體力 100、心情 100 再重新開始今天。</p>';
-    }
+    // 📘 每天的記帳規則提醒
+    html+='<hr><p>📘 <b>今日記帳提醒：</b><br>'
+         +'每完成一次工作、餐食、休閒、借款／還款或事件，請在下方「記帳面板」輸入：金額＋體力變化＋心情變化。<br>'
+         +'忘記記帳，結算時就會發現你跟系統的結果差很多喔！</p>';
 
     if(d===1||d===3)html+='<p>🎲 今天可以抽命運事件卡，建議抽 1～2 次。</p>';
     if(d===2){
@@ -1027,14 +1099,23 @@
     $('#drawBlock').classList.toggle('hidden',!allowDraw);
 
     $('#alerts').innerHTML=html;
-    alertInfo(html+'<br><b>請確認自己今天要做哪些事，再開始行動！</b>');
+    alertInfo(html);
     updateStuBarsAndDash();
     updateWorkButton();
     updateGiftButtonForDay();
+    updateQuickLog();
   }
 
+  // 🌙 結束今天
   $('#endDay').onclick=function(){
     var d=S.meta.day;
+
+    // ⚠ 若今天學生完全沒有記帳，先給提醒
+    var stuEmpty = !S.tx_stu[d] || S.tx_stu[d].length===0;
+    if(stuEmpty){
+      alertWarn('⚠ 今天在「學生記帳面板」完全沒有紀錄。\n請思考：你今天真的完全沒有收支或體力／心情變化嗎？\n\n（系統仍會依後台紀錄往下進行，這會影響結算時的誤差喔！）');
+    }
+
     var st=calcSysEndState(d);
     var f={$:st.money<0,e:st.energy<=0,m:st.mood<=0};
     if(f.$||f.e||f.m){
@@ -1128,9 +1209,18 @@
   var sumBtn=document.querySelector('.sticky [data-nav="#page-summary"]');
   sumBtn.onclick=function(){nav('#page-summary');updateSummary(false);};
 
+  // 表單送交
   function openForm(obj){
-    if(!S.formURL){alertWarn('老師尚未設定表單網址');return;}
-    window.open(S.formURL+encodeURIComponent(JSON.stringify(obj)),'_blank');
+    if(!S.formURL){
+      try{
+        S.formURL = localStorage.getItem(FORMKEY) || '';
+      }catch(e){}
+    }
+    if(!S.formURL){
+      alertWarn('老師尚未設定表單網址');
+      return;
+    }
+    window.open(S.formURL + encodeURIComponent(JSON.stringify(obj)),'_blank');
   }
   $('#sendEnd').onclick=function(){openForm(finalPayload());};
   $('#copy').onclick=function(){
@@ -1146,7 +1236,11 @@
     else alertError('教師碼錯誤');
   };
   $('#saveForm').onclick=function(){
-    S.formURL=($('#formURL').value||'').trim();save();
+    S.formURL=($('#formURL').value||'').trim();
+    save();
+    try{
+      localStorage.setItem(FORMKEY, S.formURL);
+    }catch(e){}
     $('#formSaved').textContent=S.formURL?'已設定':'—';
   };
   $('#parse').onclick=function(){
