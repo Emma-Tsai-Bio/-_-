@@ -62,7 +62,7 @@
   <!-- 📇 封面 -->
   <section id="page-cover" class="card">
     <h3>📇 封面</h3>
-    <div classgrid-2>
+    <div class="grid-2">
       <div class="card">
         <div class="row">
           <label>班級</label><input id="klass" autocomplete="off" placeholder="901">
@@ -504,7 +504,10 @@
     deathDays:[]
   };
 
+  // 大網紅粉絲禮物每日使用狀態
   var giftUsed={1:false,2:false,3:false,4:false};
+  // 每日是否已完成工作
+  var workUsed={1:false,2:false,3:false,4:false};
 
   function key(){return PFX+":"+(S.meta.klass||'NA')+"-"+(S.meta.no||'NA')+"-"+(S.meta.name||'NA');}
   function save(){try{localStorage.setItem(key(),JSON.stringify(S));}catch(e){}}
@@ -582,6 +585,7 @@
     S.deathCount=0;
     S.deathDays=[];
     giftUsed={1:false,2:false,3:false,4:false};
+    workUsed={1:false,2:false,3:false,4:false};
 
     $('#who').textContent=S.meta.name?(S.meta.klass+"-"+S.meta.no+"-"+S.meta.name):'未登入';
     $('#sid').textContent=key();
@@ -746,10 +750,23 @@
     S.counters[d][kind]++;save();
   }
 
+  // 工作按鈕狀態：考慮請假＋今日是否已完成工作
   function updateWorkButton(){
-    var d=S.meta.day,leave=S.leave[d];
-    $('#work').disabled=!!leave;
-    $('#work').style.opacity=leave?'0.6':'1';
+    var d=S.meta.day,leave=S.leave[d],used=workUsed[d];
+    var btn=$('#work');
+    if(leave){
+      btn.disabled=true;
+      btn.style.opacity='0.6';
+      btn.textContent='今天已請假';
+    }else if(used){
+      btn.disabled=true;
+      btn.style.opacity='0.6';
+      btn.textContent='今日已完成工作 💼';
+    }else{
+      btn.disabled=false;
+      btn.style.opacity='1';
+      btn.textContent='完成工作（教師認證）';
+    }
   }
 
   $('#leavePaid').onclick=function(){
@@ -774,6 +791,7 @@
       +'金額：0；體力 +10；心情 +20。');
   };
 
+  // 粉絲贈禮按鈕狀態：要黑紅大網紅＋已完成工作＋非無薪假＋當日未領過
   function updateGiftButtonForDay(){
     var d=S.meta.day;
     var btn=$('#giftBtn');
@@ -782,6 +800,21 @@
       return;
     }
     btn.classList.remove('hidden');
+
+    if(S.leave[d]==='unpaid'){
+      btn.disabled=true;
+      btn.style.opacity='0.6';
+      btn.textContent='無薪假當天無法領禮物';
+      return;
+    }
+
+    if(!workUsed[d]){
+      btn.disabled=true;
+      btn.style.opacity='0.6';
+      btn.textContent='需先完成今日工作';
+      return;
+    }
+
     if(giftUsed[d]){
       btn.disabled=true;
       btn.style.opacity='0.6';
@@ -801,6 +834,10 @@
     var d=S.meta.day;
     if(S.leave && S.leave[d]==='unpaid'){
       alertWarn('今天你請了「無薪假」，粉絲們也暫時沒有斗內喔～<br>明天努力工作，再看看粉絲有沒有送禮物吧！');
+      return;
+    }
+    if(!workUsed[d]){
+      alertWarn('今天還沒完成工作，粉絲還在觀望呢～\n請先完成「今日工作」，再來看有沒有粉絲送禮物吧！');
       return;
     }
     if(giftUsed[d]){
@@ -837,11 +874,15 @@
 
   function applyFx(base,fx){return Math.round(base*fx);}
 
-  // 工作（保留可按多次，由老師實務控管）
+  // 💼 工作：每天只能一次
   $('#work').onclick=function(){
     if(!S.job){alertWarn('尚未選擇職業，請回到封面選擇職業。');return;}
     var d=S.meta.day;
     if(S.leave[d]){alertWarn('今天已請假，無法上班。');return;}
+    if(workUsed[d]){
+      alertInfo('🕓 今天你已經完成工作囉，明天再繼續努力！');
+      return;
+    }
 
     var eff=S.effects[d]||{},fx=eff.fxHint||1;
     Swal.fire({
@@ -873,6 +914,9 @@
           var finalPay=applyFx(base,fx);
           addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
             note:'完成工作-'+S.job.name+payNote+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
+          workUsed[d]=true;save();
+          updateWorkButton();
+          updateGiftButtonForDay();
           beep('ding');
           alertSuccess(
             '💼 完成工作！<br>'
@@ -887,6 +931,9 @@
         var finalPay=applyFx(base,fx);
         addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
           note:'完成工作-'+S.job.name+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
+        workUsed[d]=true;save();
+        updateWorkButton();
+        updateGiftButtonForDay();
         beep('ding');
         alertSuccess(
           '💼 完成工作！<br>'
