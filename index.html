@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>好漾人生｜雙中模擬市民 v6.reset+hint</title>
+  <title>好漾人生｜雙中模擬市民 v6.reset+hint.5</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root{
@@ -11,8 +11,22 @@
       --ok:#123d2c;--ok2:#1c7c4f;--warn:#3a2b12;--warn2:#996f2a;--bad:#3a1212;--bad2:#912a2a;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC",Arial}
-    header{position:sticky;top:0;z-index:4;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:#0b1020cc;backdrop-filter:blur(6px)}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:ui-sans-serif,system-ui,-apple-system,"Noto Sans TC",Arial;
+      line-height:1.2;
+    }
+    header{
+      position:sticky;top:0;z-index:4;
+      display:flex;justify-content:space-between;align-items:center;
+      padding:8px 14px;
+      border-bottom:1px solid var(--line);
+      background:#0b1020cc;
+      backdrop-filter:blur(6px);
+    }
+    header h1{font-size:16px;margin:0}
     main{padding:12px 12px 110px;max-width:1080px;margin:0 auto}
     .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0;box-shadow:0 12px 24px rgba(0,0,0,.25);overflow:hidden}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -31,7 +45,7 @@
     .table th,.table td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;font-size:13px;white-space:nowrap}
     .hidden{display:none}
     .right{text-align:right}
-    .note{color:var(--muted);font-size:12px}
+    .note{color:var(--muted);font-size:12px;line-height:1.3}
     .bar{height:10px;border-radius:999px;background:#0e1630;border:1px solid #1d2a63;overflow:hidden;min-width:160px}
     .bar>span{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);width:100%}
     .sticky{position:fixed;bottom:0;left:0;right:0;background:#0b1020f2;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-around;padding:8px;z-index:9}
@@ -41,19 +55,23 @@
     .dash .box{background:#0f1a3b;border:1px solid #2a3a78;border-radius:12px;padding:10px 12px;min-width:120px}
     .dash .box b{font-size:18px}
     .fab{position:fixed;right:16px;bottom:72px;z-index:5;padding:12px 16px;border-radius:999px;background:#1e3a8a;border:1px solid #3b82f6;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.35)}
-    .swal2-html-container{text-align:center !important;}
+    .swal2-html-container{text-align:left !important;} /* 提示文字置左 */
     #tAmt,#tE,#tM{width:90px}
+    label{white-space:nowrap;} /* 讓「姓名」不會被拆開 */
+    /* 每日比較表：成對欄位同色 */
+    .pair-money{background:#101832;}
+    .pair-energy{background:#111a3a;}
+    .pair-mood{background:#131f45;}
+    .pair-money th,.pair-energy th,.pair-mood th{border-bottom-color:#2b3b74;}
   </style>
 </head>
 <body>
 
 <header>
+  <h1>好漾人生｜雙中模擬市民</h1>
   <div class="row">
-    <strong>好漾人生｜雙中模擬市民</strong>
-    <span id="who" class="badge">未登入</span>
-  </div>
-  <div class="row">
-    <button id="btnSound" class="pill">🔈 提示音開</button>
+    <span id="who" class="pill">未登入</span>
+    <button id="btnSound" class="primary">🔈 提示音開</button>
   </div>
 </header>
 
@@ -65,16 +83,19 @@
     <div class="grid-2">
       <div class="card">
         <div class="row">
-          <label>班級</label><input id="klass" autocomplete="off" placeholder="901">
-          <label>座號</label><input id="no" autocomplete="off" placeholder="12">
-          <label>姓名</label><input id="name" autocomplete="off" placeholder="王小明" style="min-width:140px">
+          <label>班級</label>
+          <input id="klass" autocomplete="off" placeholder="901" style="width:90px">
+          <label>座號</label>
+          <input id="no" autocomplete="off" placeholder="12" style="width:70px">
+          <label>姓名</label>
+          <input id="name" autocomplete="off" placeholder="王小明" style="width:120px">
         </div>
         <div class="row">
           <label>職業</label>
           <select id="job"></select>
         </div>
         <div id="jobDesc" class="note">
-          請選擇職業，右側會顯示工作內容、薪資、體力／心情耗損、有薪假天數。
+          請選擇職業，右側會顯示工作內容、薪資、體力／心情耗損與有薪假天數。
         </div>
         <div class="row" style="margin-top:8px">
           <button id="start" class="primary">儲存並開始（Day1）</button>
@@ -107,42 +128,41 @@
   <section id="page-rules" class="card hidden">
     <h2>🎯 遊戲任務說明</h2>
     <p>
-      你即將體驗 4 天的《好漾人生模擬市民》！<br>
-      你的目標是：<strong>讓金錢 💵、體力 ❤️、心情 😊 都維持平衡</strong>。<br><br>
-      💀 任一數值變成 0 就會「死亡重生」，會被記錄死亡次數。<br>
-      🏆 遊戲結束後會根據三個數值換算成最終成果，誰能活得最平衡、最聰明呢？
+      你將體驗 4 天的《好漾人生模擬市民》。<br>
+      目標是：<strong>讓金錢 💵、體力 ❤️、心情 😊 都維持在安全範圍</strong>。<br><br>
+      💀 任一數值變成 0 會「死亡重生」，記 1 次死亡。<br>
+      🏆 結束時會看三個數值與死亡次數，誰最平衡誰就最厲害。
     </p>
 
     <h3>🧩 基本玩法</h3>
     <ul>
-      <li>💵 <strong>賺錢</strong>：主要靠工作、投資。</li>
-      <li>❤️ <strong>體力</strong>：每天至少吃 1 餐，吃飯可補體力。</li>
-      <li>😊 <strong>心情</strong>：透過休閒活動維持開心！</li>
-      <li>🎲 <strong>Day1、3</strong>：可以抽「命運事件卡」，可能好運、也可能倒楣！</li>
-      <li>💸 <strong>Day2、4</strong>：有強制支出（繳班費、水電費）要記得留錢！</li>
-      <li>☠️ 任一數值歸 0 會死亡重生，記錄 +1。</li>
+      <li>💵 靠「工作、投資」賺錢。</li>
+      <li>❤️ 靠「吃飯」回體力，每天建議 1～3 餐。</li>
+      <li>😊 靠「休閒活動」加心情。</li>
+      <li>🎲 Day1、Day3 可抽命運事件卡（有好有壞）。</li>
+      <li>💸 Day2、Day4 會有強制支出，要記得留現金。</li>
     </ul>
 
     <div class="card">
-      <b>體力值、心情值規則與影響（系統會自動套用到薪水計算）</b>
+      <b>體力／心情對薪水的影響（系統自動套用）</b>
       <ul>
-        <li>體力 &gt; 110：薪水 1.5 倍</li>
-        <li>體力 &lt; 50：薪水減半</li>
-        <li>心情 &gt; 110：薪水 1.5 倍</li>
-        <li>心情 &lt; 30：薪水減半</li>
+        <li>體力 &gt; 110：薪水 ×1.5</li>
+        <li>體力 &lt; 50：薪水 ÷2</li>
+        <li>心情 &gt; 110：薪水 ×1.5</li>
+        <li>心情 &lt; 30：薪水 ÷2</li>
       </ul>
-      <p class="note">＊實際發放玩具鈔時，老師也可以參考此倍率。</p>
+      <p class="note">＊老師發玩具鈔時也可參考這個倍率。</p>
     </div>
 
-    <!-- 🧾 規則頁也放記帳提醒 -->
+    <!-- 🧾 規則頁記帳提醒 -->
     <div class="card">
       <h3 class="h4">🧾 記帳規則說明</h3>
-      <p class="note">
-        每完成一件事情（工作、餐食、休閒、借款／還款、事件卡、強制支出⋯），<br>
-        請在「記帳」頁的面板中自己輸入：<br>
+      <p>
+        每完成一件事（工作、餐食、休閒、借款／還款、事件卡、強制支出⋯），<br>
+        請在「記帳」頁自己填：<br>
         💰 金額 ＋ ❤️ 體力變化 ＋ 😊 心情變化。<br><br>
-        系統會在後台暗中記錄真實數值，<br>
-        直到第 4 天結束時才一次秀出，和你的記帳做比較。
+        系統會在後台記「真實數值」，<br>
+        第 4 天才一次公開，跟你的記帳比對。
       </p>
     </div>
 
@@ -153,7 +173,7 @@
   <section id="page-record" class="card hidden">
     <div class="row" style="justify-content:space-between">
       <h3>🧾 記帳（第 <span id="day">1</span> 天）</h3>
-      <span class="pill">系統會在後台自動計算，但不會即時顯示結果</span>
+      <span class="pill">下面是你自己的記帳，系統會另存一份「真實紀錄」。</span>
     </div>
 
     <!-- 目前職業資訊 -->
@@ -165,12 +185,12 @@
     <div id="alerts" class="card">
       <h3>🌅 新的一天開始！</h3>
       <p>
-        今天請完成以下事情 👇<br>
-        ① 做你的工作（或請假）→ 賺錢主要來源。<br>
-        ② 選擇吃飯 1～3 次 → 補體力。<br>
-        ③ 做 1～2 個休閒活動 → 加心情。<br>
-        ④ 若是 Day1 或 Day3 → 可抽命運事件卡！<br>
-        ⑤ 注意！Day2、Day4 會有強制花費，記得預留現金。💸
+        今日重點：<br>
+        ① 上班或請假（主要收入）。<br>
+        ② 吃飯 1～3 次（顧體力）。<br>
+        ③ 做 1～2 個休閒活動（顧心情）。<br>
+        ④ Day1、3 可抽事件卡。<br>
+        ⑤ Day2、4 會有固定支出，要留錢。
       </p>
     </div>
 
@@ -189,16 +209,17 @@
             <button id="leaveUnpaid" class="warn">請無薪假</button>
           </div>
           <p class="note">
-            ＊請假後，休閒活動次數不限；有薪假仍可領薪水，無薪假則沒有薪水。<br>
-            ＊有薪假與無薪假需自行在記帳面板填寫金錢、體力、心情變化。
+            有薪假：照領薪水，休閒不限次。<br>
+            無薪假：沒薪水，休閒不限次。<br>
+            金錢、體力、心情請到下方「記帳」自己填。
           </p>
 
           <hr>
 
           <div class="h4">🎮 休閒活動（每日最多 2 次，如當天請假則無上限）</div>
           <p class="note">
-            🎲 每天最多玩 2 個活動（請假可玩不限次）。<br>
-            💬 太多娛樂也會累，別讓體力爆掉喔！
+            一般情況：每天最多 2 個休閒活動。<br>
+            當天有請假時：休閒次數不限。
           </p>
           <div class="row">
             <button id="fun0" class="good">看電影（錢-200 / 體-10 / 心+20）</button>
@@ -207,22 +228,14 @@
             <button id="fun3" class="good">運動（錢-10 / 體-25 / 心+15）</button>
             <button id="fun4" class="good">畫畫／讀書（錢-100 / 體-5 / 心+10）</button>
           </div>
-
-          <!-- 🕒 最近系統紀錄 -->
-          <div class="card" style="margin-top:8px;">
-            <div class="h4">🕒 最近 2 筆系統紀錄</div>
-            <p id="quickLog" class="note">
-              目前尚未有系統紀錄。當你按上面的快捷鍵或遇到強制支出時，這裡會顯示最近兩筆後台紀錄（只讀）。
-            </p>
-          </div>
         </div>
 
         <!-- 右：餐食＋抽卡 -->
         <div>
           <div class="h4">🍱 餐食（每日最多 3 次）</div>
           <p class="note">
-            💡 每天至少吃一餐，不吃會掉體力又掉心情！<br>
-            🧑‍🍳 自己煮要花時間（會占 1 個休閒格），但最均衡又省錢。
+            每天至少吃一餐，不吃會掉體力也掉心情。<br>
+            自己煮會占 1 個休閒名額。
           </p>
           <div class="row">
             <button id="food0" class="warn">不吃飯（錢0 / 體-20 / 心-15）</button>
@@ -240,6 +253,14 @@
           </div>
         </div>
       </div>
+
+      <!-- 🕒 最近 2 筆系統紀錄 -->
+      <div class="card" style="margin-top:12px;">
+        <div class="h4">🕒 當天最近 2 筆「系統紀錄」</div>
+        <p id="quickLog" class="note">
+          目前尚未有紀錄。當你按上面的快捷鍵、完成工作、粉絲贈禮或遇到強制支出時，這裡會顯示當天最近 2 筆後台行為。
+        </p>
+      </div>
     </div>
 
     <!-- 記帳與明細 -->
@@ -247,9 +268,8 @@
       <div class="h4">🧾 記帳與今日明細</div>
       <div id="jobRule" class="note" style="margin-bottom:6px;">職業：—</div>
       <p class="note">
-        🧮 每完成一件事（工作、餐食、休閒、借款／還款等），請在下方記帳面板自己輸入：<br>
-        金額＋體力變化＋心情變化。<br>
-        系統會在後台暗中計算真實數值，結算時才會顯示結果。
+        每做一件事，就在這裡幫自己記帳：收／支、類別、金額、體力變化、心情變化。<br>
+        下方儀表板只看「你自己」的記錄，和系統可能會有差異。
       </p>
       <div class="grid-2">
         <div>
@@ -282,7 +302,6 @@
             <input id="tNote" style="flex:1" placeholder="例如：看電影／繳班費">
             <button id="add" class="primary">加入本日</button>
           </div>
-          <p class="note">＊下方儀表板與體／心數值以「學生自行輸入」為準，與系統後台可能不同。</p>
           <div class="dash">
             <div class="box">目前金錢<br><b id="dashMoney">1000</b></div>
             <div class="box">目前體力<br><b id="dashE">100</b></div>
@@ -308,11 +327,10 @@
   <section id="page-summary" class="card hidden">
     <h3>🎉 恭喜完成 4 天挑戰！</h3>
     <p>
-      來看看你的人生過得如何吧：<br>
-      💵 錢夠用嗎？ ❤️ 雙腳撐得住嗎？ 😊 還快樂嗎？<br><br>
-      💀 死亡會扣分，欠債會減分。<br>
-      🧘‍♂️ 三值都穩又沒欠債 = <strong>人生平衡王！</strong><br><br>
-      完成後請點「送交到表單」，並回答反思問題。
+      來看看你這 4 天過得如何：<br>
+      金錢有沒有見底？體力撐得住嗎？心情還開心嗎？<br><br>
+      死亡會扣分，欠錢也會被扣分。<br>
+      三個數值都穩、又沒欠債，就是「人生平衡王」！
     </p>
 
     <div class="grid-2">
@@ -341,6 +359,26 @@
       <div id="delta" class="note">—</div>
     </div>
 
+    <div class="card">
+      <h4 class="h4">📊 每日系統 vs 學生記帳比較</h4>
+      <div class="scroll-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>日</th>
+              <th class="pair-money">系統 金</th>
+              <th class="pair-money">學生 金</th>
+              <th class="pair-energy">系統 體</th>
+              <th class="pair-energy">學生 體</th>
+              <th class="pair-mood">系統 心</th>
+              <th class="pair-mood">學生 心</th>
+            </tr>
+          </thead>
+          <tbody id="dailyDiffBody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="grid-2">
       <div class="card">
         <h4 class="h4">🧮 系統明細（後台紀錄）</h4>
@@ -367,7 +405,6 @@
     </div>
 
     <div class="row">
-      <button id="copy" class="good">複製 JSON</button>
       <button id="sendEnd" class="primary">送交到表單</button>
     </div>
   </section>
@@ -385,7 +422,7 @@
     <div id="tTools" class="hidden">
       <div class="card">
         <h4 class="h4">📨 表單設定</h4>
-        <p class="note">貼 Google 表單 formResponse 的網址前段（含 entry= 等號），學生按「送交到表單」時會把 JSON 接在後面。</p>
+        <p class="note">貼上 Google 表單 formResponse 的網址前段（含 entry= 等號）。學生按「送交到表單」時，系統會把 JSON 接在後面。</p>
         <div class="row">
           <input id="formURL" autocomplete="off" style="flex:1">
           <button id="saveForm" class="primary">儲存</button>
@@ -429,8 +466,8 @@
   <button data-nav="#page-teacher">教師</button>
 </div>
 
-<!-- 結束今天 -->
-<button id="endDay" class="fab">結束今天 ▶</button>
+<!-- 結束今天：只在「記帳頁」會顯示 -->
+<button id="endDay" class="fab" style="display:none;">結束今天 ▶</button>
 
 <script>
 (function(){
@@ -438,21 +475,8 @@
   function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
   var PFX="hy-young-v60";
   var TEACHER="127";
-  var FORMKEY = PFX + ":CFG:FORM";   // 老師表單設定專用 key
-
-  // 一進來就清掉之前所有「學生遊戲紀錄」，但保留老師設定
-  (function clearOldStorage(){
-    try{
-      var toDel = [];
-      for(var i=0;i<localStorage.length;i++){
-        var k = localStorage.key(i);
-        if(k.indexOf(PFX+':') === 0 && k !== FORMKEY){
-          toDel.push(k);
-        }
-      }
-      toDel.forEach(function(k){ localStorage.removeItem(k); });
-    }catch(e){}
-  })();
+  var FORMKEY = PFX + ":CFG:FORM";
+  var DEFAULT_FORM = "https://docs.google.com/forms/d/e/1FAIpQLScrRiYhHL2EeTVa9OOGA5k8_1FkOe3Y0Om2ezCh4jJvnFlJgA/viewform?usp=pp_url&entry.1380580179=";
 
   // 🔊 音效
   var audio=null,soundOn=true;
@@ -475,10 +499,13 @@
     g.gain.exponentialRampToValueAtTime(.0001,t+d);
     o.start(t);o.stop(t+d+.02);
   }
-  $('#btnSound').onclick=function(){
-    soundOn=!soundOn;
-    $('#btnSound').textContent=soundOn?'🔈 提示音開':'🔇 提示音關';
-  };
+  var btnSound = $('#btnSound');
+  if(btnSound){
+    btnSound.onclick=function(){
+      soundOn=!soundOn;
+      btnSound.textContent=soundOn?'🔈 提示音開':'🔇 提示音關';
+    };
+  }
 
   function alertInfo(html){Swal.fire({icon:"info",html:html,confirmButtonText:"好"});}
   function alertSuccess(html){Swal.fire({icon:"success",html:html,confirmButtonText:"太棒了！"});}
@@ -488,17 +515,17 @@
   // 職業
   var JOBS=[
     {id:'mega',name:'黑紅大網紅（有薪假0天）',salary:600,e:-60,m:-50,pl:0,
-      desc:'每天錄影紀錄1種職業內容，並產出介紹文字、標題。工作完成後，可能觸發粉絲贈禮。薪資：完成 +600；體力-60；心情-50。'},
+      desc:'每天錄影介紹一種職業，寫標題與文案。工作完成後可抽粉絲贈禮。薪資約 +600；體-60；心-50。'},
     {id:'eng',name:'工程師',salary:500,e:-50,m:-40,pl:1,base:150,bonus:350,
-      desc:'每天完成一個程式。薪資：底薪150＋完成獎金350（共500）；體力-50；心情-40。'},
+      desc:'每天完成一個程式題。底薪150＋獎金350（共500）；體-50；心-40。'},
     {id:'teacher',name:'老師',salary:300,e:-20,m:-40,pl:1,
-      desc:'每天完成一個題目講解或重點筆記整理。薪資：+300；體力-20；心情-40。'},
+      desc:'每天做一份講義／重點整理。薪資+300；體-20；心-40。'},
     {id:'admin',name:'行政人員',salary:150,e:-15,m:-20,pl:1,
-      desc:'打字（學科重點）。薪資：+150；體力-15；心情-20。'},
+      desc:'負責打字、整理資料。薪資+150；體-15；心-20。'},
     {id:'clean',name:'清潔人員',salary:100,e:-30,m:-30,pl:1,
-      desc:'掃教室、擦窗戶、整理回收物⋯⋯。薪資：+100；體力-30；心情-30。'},
+      desc:'掃地、倒垃圾、整理環境。薪資+100；體-30；心-30。'},
     {id:'mini',name:'小網紅（有薪假0天）',salary:80,e:-40,m:+30,pl:0,
-      desc:'拍1張合格活動照片＋拍抖音音樂舞。薪資：+80；體力-40；心情+30。'}
+      desc:'拍1張合格活動照＋一支舞蹈短片。薪資+80；體-40；心+30。'}
   ];
 
   var LUCKY=[
@@ -521,7 +548,7 @@
     job:null,
     tx_stu:{1:[],2:[],3:[],4:[]},
     tx_sys:{1:[],2:[],3:[],4:[]},
-    formURL:'',
+    formURL:DEFAULT_FORM,
     effects:{},
     counters:{},
     leave:{},
@@ -530,33 +557,26 @@
     deathDays:[]
   };
 
-  // 一進來先讀取老師之前設定過的表單網址
+  // 讀取老師表單網址設定（若沒有就用預設）
   (function loadFormConfig(){
     try{
-      var f = localStorage.getItem(FORMKEY) || '';
+      var f = localStorage.getItem(FORMKEY);
       if(f){
         S.formURL = f;
-        var inp = document.querySelector('#formURL');
-        var lab = document.querySelector('#formSaved');
-        if(inp) inp.value = f;
-        if(lab) lab.textContent = '已設定';
       }
+      var inp = document.querySelector('#formURL');
+      var lab = document.querySelector('#formSaved');
+      if(inp) inp.value = S.formURL || '';
+      if(lab) lab.textContent = S.formURL ? '已設定' : '—';
     }catch(e){}
   })();
 
-  // 大網紅粉絲禮物每日使用狀態
   var giftUsed={1:false,2:false,3:false,4:false};
-  // 每日是否已完成工作
   var workUsed={1:false,2:false,3:false,4:false};
 
   function key(){return PFX+":"+(S.meta.klass||'NA')+"-"+(S.meta.no||'NA')+"-"+(S.meta.name||'NA');}
   function save(){try{localStorage.setItem(key(),JSON.stringify(S));}catch(e){}}
 
-  function nav(id){
-    var secs=$$('main>section');
-    for(var i=0;i<secs.length;i++){secs[i].classList.toggle('hidden','#'+secs[i].id!==id);}
-    location.hash=id;
-  }
   function setBars(e,m){
     $('#eBar').style.width=Math.max(0,Math.min(100,e))+'%';
     $('#mBar').style.width=Math.max(0,Math.min(100,m))+'%';
@@ -589,7 +609,7 @@
   function paintJobDesc(){
     if(!S.job){
       $('#jobNow').textContent='—';
-      $('#jobDesc').textContent='請選擇職業，右側會顯示工作內容、薪資、體力／心情耗損、有薪假天數。';
+      $('#jobDesc').textContent='請選擇職業，右側會顯示工作內容、薪資、體力／心情耗損與有薪假天數。';
       $('#jobRule').textContent='職業：—';
       $('#giftBtn').classList.add('hidden');
       renderJobBanner();
@@ -641,6 +661,18 @@
   };
   $('#seeRules').onclick=function(){nav('#page-rules');};
   $('#toRecord').onclick=function(){nav('#page-record');if(!started){started=true;dayStart(true);}};
+
+  // 頁面切換 + 結束今天按鈕顯示控制
+  function nav(id){
+    var secs=$$('main>section');
+    for(var i=0;i<secs.length;i++){
+      secs[i].classList.toggle('hidden','#'+secs[i].id!==id);
+    }
+    var showEnd = (id === '#page-record');
+    var endBtn = $('#endDay');
+    if(endBtn) endBtn.style.display = showEnd ? 'block' : 'none';
+    location.hash=id;
+  }
 
   // 學生記帳
   var tbody=$('#tTable tbody');
@@ -697,21 +729,30 @@
     }
   };
 
-  // 🕒 最近 2 筆系統紀錄（後台）
+  // 🕒 最近 2 筆系統紀錄
   function updateQuickLog(){
     var d=S.meta.day;
     var arr=S.tx_sys[d]||[];
     if(!arr.length){
-      $('#quickLog').textContent='目前尚未有系統紀錄。當你按上面的快捷鍵或遇到強制支出時，這裡會顯示最近兩筆後台紀錄（只讀）。';
+      $('#quickLog').textContent='目前尚未有紀錄。當你按上面的快捷鍵、完成工作、粉絲贈禮或遇到強制支出時，這裡會顯示當天最近 2 筆後台行為。';
       return;
     }
-    var sorted=arr.slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);}).slice(0,2);
-    var lines=sorted.map(function(t){
+    var len=arr.length;
+    var start=Math.max(0,len-2);
+    var lines=[];
+    for(var i=start;i<len;i++){
+      var t=arr[i];
+      var idx=i+1;
       var kind=t.type==='income'?'收入':'支出';
-      return 'Day '+d+'｜'+kind+'｜'+transCat(t.cat)+'｜$'+t.amt
-             +'｜體'+fmtSign(t.e||0)+'｜心'+fmtSign(t.m||0)
-             +(t.note?('｜'+t.note):'');
-    });
+      lines.push(
+        'Day '+d+'｜第'+idx+'筆｜'
+        +kind+'｜'+transCat(t.cat)
+        +'｜$'+t.amt
+        +'｜體'+fmtSign(t.e||0)
+        +'｜心'+fmtSign(t.m||0)
+        +(t.note?('｜'+t.note):'')
+      );
+    }
     $('#quickLog').innerHTML=lines.join('<br>');
   }
 
@@ -812,13 +853,13 @@
 
   // 工作按鈕狀態
   function updateWorkButton(){
-    var d=S.meta.day,leave=S.leave[d],used=workUsed[d];
+    var d=S.meta.day,leave=S.leave[d],usedW=workUsed[d];
     var btn=$('#work');
     if(leave){
       btn.disabled=true;
       btn.style.opacity='0.6';
       btn.textContent='今天已請假';
-    }else if(used){
+    }else if(usedW){
       btn.disabled=true;
       btn.style.opacity='0.6';
       btn.textContent='今日已完成工作 💼';
@@ -831,24 +872,28 @@
 
   $('#leavePaid').onclick=function(){
     var d=S.meta.day;
+    if(workUsed[d]){alertWarn('今天已完成工作，不能再請假。');return;}
     if(S.leave[d]){alertWarn('今天已經有請假紀錄，無法重複設定。');return;}
-    if(!S.job){alertWarn('請先選擇職業才能計算有薪假天數。');return;}
-    if(S.job.pl===0){alertWarn('此職業無有薪假天數。');return;}
+    if(!S.job){alertWarn('請先選擇職業才能算有薪假天數。');return;}
+    if(S.job.pl===0){alertWarn('此職業沒有有薪假。');return;}
     if(S.leavePaidUsed>=S.job.pl){alertWarn('已用完所有有薪假天數。');return;}
     S.leave[d]='paid';S.leavePaidUsed++;save();updateWorkButton();
-    alertInfo('今天設定為「有薪假」，<br>請在記帳面板自行填寫：<br>'
+    var basePay = (S.job.id==='eng' ? (S.job.base||150) : S.job.salary);
+    addSys({type:'income',cat:'salary',amt:basePay,e:+10,m:+10,note:'有薪假'});
+    alertInfo('今天是「有薪假」。<br>請到記帳面板輸入一筆：<br>'
       +'收／支：收入；類別：薪資／打工；<br>'
-      +'金額：約 $'+(S.job?S.job.salary:0)+'；體力 +10；心情 +10。<br>'
-      +'（當天休閒活動次數不限）');
+      +'金額：約 $'+basePay+'；體力 +10；心情 +10。<br>'
+      +'（今日休閒活動次數不限）');
   };
   $('#leaveUnpaid').onclick=function(){
     var d=S.meta.day;
+    if(workUsed[d]){alertWarn('今天已完成工作，不能再請假。');return;}
     if(S.leave[d]){alertWarn('今天已經有請假紀錄，無法重複設定。');return;}
     S.leave[d]='unpaid';save();updateWorkButton();
-    alertInfo('今天設定為「無薪假」，休閒活動次數不限。<br>'
-      +'請在記帳面板自行填寫：<br>'
-      +'收／支：收入；類別：薪資／打工；<br>'
-      +'金額：0；體力 +10；心情 +20。');
+    addSys({type:'income',cat:'salary',amt:0,e:+10,m:+20,note:'無薪假'});
+    alertInfo('今天是「無薪假」，沒有薪水、休閒不限次。<br>'
+      +'建議到記帳面板輸入：<br>'
+      +'收／支：收入；類別：薪資／打工；金額：0；體力 +10；心情 +20。');
   };
 
   // 粉絲贈禮按鈕狀態
@@ -893,15 +938,15 @@
     }
     var d=S.meta.day;
     if(S.leave && S.leave[d]==='unpaid'){
-      alertWarn('今天你請了「無薪假」，粉絲們也暫時沒有斗內喔～<br>明天努力工作，再看看粉絲有沒有送禮物吧！');
+      alertWarn('今天你請了「無薪假」，粉絲也暫時沒有斗內喔～<br>明天努力工作再試試看！');
       return;
     }
     if(!workUsed[d]){
-      alertWarn('今天還沒完成工作，粉絲還在觀望呢～<br>請先完成「今日工作」，再來看有沒有粉絲送禮物吧！');
+      alertWarn('今天還沒完成工作，粉絲還在觀望。<br>先完成工作，再看看有沒有禮物吧！');
       return;
     }
     if(giftUsed[d]){
-      alertInfo('🎀 今天粉絲已經送過禮物囉，明天再看看有沒有新斗內！');
+      alertInfo('今天粉絲已經送過禮物囉，明天再期待新的斗內！');
       return;
     }
     giftUsed[d]=true;
@@ -914,33 +959,33 @@
     }
     addSys({type:'income',cat:'event',amt:total,e:0,m:0,note:'粉絲贈禮 '+gifts+' 個'});
     beep('ding');
-    alertSuccess('恭喜你～獲得粉絲斗內 <b>'+gifts+'</b> 個禮物，總共獲得 <b>'+total+'</b> 元！');
+    alertSuccess('恭喜你～獲得粉絲斗內 <b>'+gifts+'</b> 個禮物，總共 <b>'+total+'</b> 元！');
     updateGiftButtonForDay();
   };
 
   // 餐食
-  $('#food0').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:0,e:-20,m:-15,note:'不吃飯'});used('food');beep('cash');alertInfo('🍽 不吃飯 → 體-20 / 心-15');};
-  $('#food1').onclick=function(){if(!canUse('food'))return;if(!canUse('fun'))return;addSys({type:'expense',cat:'food',amt:100,e:+20,m:+10,note:'自己備餐'});used('food');used('fun');beep('cash');alertInfo('🍱 自己備餐 -100，體+20 / 心+10（同時占用 1 次休閒額度）');};
-  $('#food2').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:100,e:+15,m:+10,note:'路邊攤'});used('food');beep('cash');alertInfo('🥟 路邊攤 -100，體+15 / 心+10');};
-  $('#food3').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:200,e:+30,m:+0,note:'健康餐盒'});used('food');beep('cash');alertInfo('🥗 健康餐盒 -200，體+30 / 心+0');};
-  $('#food4').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:300,e:+10,m:+20,note:'奢侈速食'});used('food');beep('cash');alertInfo('🍔 奢侈速食 -300，體+10 / 心+20');};
+  $('#food0').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:0,e:-20,m:-15,note:'不吃飯'});used('food');beep('cash');alertInfo('🍽 不吃飯 → 體-20，心-15');};
+  $('#food1').onclick=function(){if(!canUse('food'))return;if(!canUse('fun'))return;addSys({type:'expense',cat:'food',amt:100,e:+20,m:+10,note:'自己備餐'});used('food');used('fun');beep('cash');alertInfo('🍱 自己備餐 -100，體+20，心+10（占 1 次休閒額度）');};
+  $('#food2').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:100,e:+15,m:+10,note:'路邊攤'});used('food');beep('cash');alertInfo('🥟 路邊攤 -100，體+15，心+10');};
+  $('#food3').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:200,e:+30,m:+0,note:'健康餐盒'});used('food');beep('cash');alertInfo('🥗 健康餐盒 -200，體+30，心+0');};
+  $('#food4').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:300,e:+10,m:+20,note:'奢侈速食'});used('food');beep('cash');alertInfo('🍔 奢侈速食 -300，體+10，心+20');};
 
   // 休閒
-  $('#fun0').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:200,e:-10,m:+20,note:'看電影'});used('fun');beep('ok');alertInfo('🎬 看電影 -200，體-10 / 心+20');};
-  $('#fun1').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:50,e:-10,m:+15,note:'打電動'});used('fun');beep('ok');alertInfo('🕹 打電動 -50，體-10 / 心+15');};
-  $('#fun2').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:250,e:-10,m:+25,note:'聚餐'});used('fun');beep('ok');alertInfo('🍻 聚餐 -250，體-10 / 心+25');};
-  $('#fun3').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:10,e:-25,m:+15,note:'運動'});used('fun');beep('ok');alertInfo('🏃 運動 -10，體-25 / 心+15');};
-  $('#fun4').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:100,e:-5,m:+10,note:'畫畫／讀書'});used('fun');beep('ok');alertInfo('🎨 畫畫／讀書 -100，體-5 / 心+10');};
+  $('#fun0').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:200,e:-10,m:+20,note:'看電影'});used('fun');beep('ok');alertInfo('🎬 看電影 -200，體-10，心+20');};
+  $('#fun1').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:50,e:-10,m:+15,note:'打電動'});used('fun');beep('ok');alertInfo('🕹 打電動 -50，體-10，心+15');};
+  $('#fun2').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:250,e:-10,m:+25,note:'聚餐'});used('fun');beep('ok');alertInfo('🍻 聚餐 -250，體-10，心+25');};
+  $('#fun3').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:10,e:-25,m:+15,note:'運動'});used('fun');beep('ok');alertInfo('🏃 運動 -10，體-25，心+15');};
+  $('#fun4').onclick=function(){if(!canUse('fun'))return;addSys({type:'expense',cat:'leisure',amt:100,e:-5,m:+10,note:'畫畫／讀書'});used('fun');beep('ok');alertInfo('🎨 畫畫／讀書 -100，體-5，心+10');};
 
   function applyFx(base,fx){return Math.round(base*fx);}
 
-  // 💼 工作：每天只能一次
+  // 💼 工作：每天一次
   $('#work').onclick=function(){
-    if(!S.job){alertWarn('尚未選擇職業，請回到封面選擇職業。');return;}
+    if(!S.job){alertWarn('尚未選擇職業，請回到封面選職業。');return;}
     var d=S.meta.day;
-    if(S.leave[d]){alertWarn('今天已請假，無法上班。');return;}
+    if(S.leave[d]){alertWarn('今天已請假，不能上班。');return;}
     if(workUsed[d]){
-      alertInfo('🕓 今天你已經完成工作囉，明天再繼續努力！');
+      alertInfo('今天已完成工作，明天再上班就好。');
       return;
     }
 
@@ -948,9 +993,9 @@
     Swal.fire({
       title:'教師認證',
       html:'工作：'+S.job.name+'<br>'
-          +'每次完成原始薪資約 $'+S.job.salary+'<br>'
-          +'體力 '+S.job.e+'｜心情 '+S.job.m+'<br>'
-          +'今日薪水倍率：<b>x '+fx.toFixed(2)+'</b>（系統已自動套用）',
+          +'原始薪資約 $'+S.job.salary+'<br>'
+          +'體力 '+S.job.e+'，心情 '+S.job.m+'<br>'
+          +'今日薪水倍率：<b>x '+fx.toFixed(2)+'</b>',
       input:'password',
       inputPlaceholder:'請由老師輸入密碼',
       showCancelButton:true,
@@ -965,15 +1010,15 @@
           title:'工程師薪資選擇',
           html:'請選擇今日給薪方式：',
           showDenyButton:true,
-          confirmButtonText:'底薪150＋獎金350（共500）',
-          denyButtonText:'僅給底薪 150'
+          confirmButtonText:'底薪150＋獎金350（500）',
+          denyButtonText:'僅底薪 150'
         }).then(function(ch){
           var base, payNote;
           if(ch.isDenied){base=S.job.base||150;payNote='（僅底薪）';}
-          else{base=(S.job.base||150)+(S.job.bonus||350);payNote='（底薪＋完成獎金）';}
+          else{base=(S.job.base||150)+(S.job.bonus||350);payNote='（底薪＋獎金）';}
           var finalPay=applyFx(base,fx);
           addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
-            note:'完成工作-'+S.job.name+payNote+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
+            note:'完成工作-'+S.job.name+payNote+'｜原始 '+base+' ×'+fx.toFixed(2)+' → '+finalPay});
           workUsed[d]=true;save();
           updateWorkButton();
           updateGiftButtonForDay();
@@ -981,16 +1026,15 @@
           alertSuccess(
             '💼 完成工作！<br>'
             +'原始薪資：$'+base+' '+payNote+'<br>'
-            +'今日倍率：x '+fx.toFixed(2)+'<br>'
-            +'👉 系統實際入帳：<b>$'+finalPay+'</b><br>'
-            +'體力'+S.job.e+'，心情'+S.job.m+' 已記錄在後台。'
+            +'倍率：x '+fx.toFixed(2)+' → 實際入帳 <b>$'+finalPay+'</b><br>'
+            +'體力'+S.job.e+'、心情'+S.job.m+' 已記入系統。'
           );
         });
       }else{
         var base=S.job.salary;
         var finalPay=applyFx(base,fx);
         addSys({type:'income',cat:'salary',amt:finalPay,e:S.job.e,m:S.job.m,
-          note:'完成工作-'+S.job.name+'｜原始 '+base+' ×'+fx.toFixed(2)+' → 實際 '+finalPay});
+          note:'完成工作-'+S.job.name+'｜原始 '+base+' ×'+fx.toFixed(2)+' → '+finalPay});
         workUsed[d]=true;save();
         updateWorkButton();
         updateGiftButtonForDay();
@@ -998,19 +1042,18 @@
         alertSuccess(
           '💼 完成工作！<br>'
           +'原始薪資：$'+base+'<br>'
-          +'今日倍率：x '+fx.toFixed(2)+'<br>'
-          +'👉 系統實際入帳：<b>$'+finalPay+'</b><br>'
-          +'體力'+S.job.e+'，心情'+S.job.m+' 已記錄在後台。'
+          +'倍率：x '+fx.toFixed(2)+' → 實際入帳 <b>$'+finalPay+'</b><br>'
+          +'體力'+S.job.e+'、心情'+S.job.m+' 已記入系統。'
         );
       }
     });
   };
 
-  // 抽卡（Day1 / Day3，每日最多 2 次）
+  // 抽事件卡
   $('#btnDraw').onclick=function(){
     var d=S.meta.day;
     if(d!==1 && d!==3){
-      alertWarn('只有第 1 天與第 3 天可以抽事件卡喔！');
+      alertWarn('只有第 1 天與第 3 天可以抽事件卡。');
       return;
     }
     if(!canUse('draw'))return;
@@ -1028,17 +1071,29 @@
       note:kind+'：'+p.name
     });
     used('draw');beep('card');
-    alertInfo(kind+'：'+p.name+'（'+(p.amt>=0?'+':'')+p.amt+'，體'+fmtSign(p.e||0)+' / 心'+fmtSign(p.m||0)+'）');
+    alertInfo(kind+'事件：'+p.name+'<br>金額 '+(p.amt>=0?'+':'')+p.amt+'｜體'+fmtSign(p.e||0)+'｜心'+fmtSign(p.m||0));
   };
 
   function deathMsg(f){
-    if(f.e&&f.m&&f.$) return "☠️ 你太累、太煩又沒錢，整個人生暫時崩盤……重置狀態，死亡次數 +1。";
-    if(f.e&&f.m)      return "⚠️ 你因為身體過度疲勞又情緒崩潰，被緊急送醫休養，重置狀態並 +1 死亡次數。";
-    if(f.e&&f.$)      return "⚠️ 你因為體力透支又資金短缺，被迫暫停工作，重置狀態並 +1 死亡次數。";
-    if(f.m&&f.$)      return "💔 你因為情緒崩潰又陷入財務困境，被迫重新開始，死亡次數 +1。";
-    if(f.e)           return "⚠️ 你因為身體過度疲勞而昏倒，被緊急送醫治療。重置狀態，死亡次數 +1。";
-    if(f.m)           return "💔 你因為情緒崩潰，決定先好好休息。重置狀態，死亡次數 +1。";
-    return "💸 你的金錢出現赤字，無法支付日常開銷，被迫重新規劃。死亡次數 +1。";
+    if (f.e && f.m && f.$) {
+      return "☠️ 金錢見底、體力耗盡、心情崩潰，你整個爆炸只好重來。死亡次數 +1。";
+    }
+    if (f.e && f.m) {
+      return "☠️ 體力歸 0 又心情歸 0，被送去長期休養，只好重啟人生。死亡次數 +1。";
+    }
+    if (f.e && f.$) {
+      return "⚠️ 體力透支又沒錢看醫生，你被強制中止活動並重置狀態。死亡次數 +1。";
+    }
+    if (f.m && f.$) {
+      return "💔 心情跌到谷底又陷入負債，你決定先把人生重開一次。死亡次數 +1。";
+    }
+    if (f.e) {
+      return "⚠️ 體力歸 0，你直接倒下送醫休養，狀態重置。死亡次數 +1。";
+    }
+    if (f.m) {
+      return "💔 心情歸 0，什麼事都做不下去，只好暫停重來。死亡次數 +1。";
+    }
+    return "💸 金錢變成負數，無法支付日常開銷，被迫重新規劃。死亡次數 +1。";
   }
 
   // 🌅 每天開始
@@ -1057,42 +1112,40 @@
     var html='<h3>'+title+'</h3>';
 
     if(diedYesterday){
-      html+='<p>昨天因為金錢或體力／心情歸 0 而「死亡重生」，<br>'
-           +'今天一開始你被重置為：金錢 1000、體力 100、心情 100，請好好規劃新的一天。</p>';
+      html+='<p>昨天有發生「死亡重生」，<br>今天起始值已重置為：金 1000，體 100，心 100。</p>';
     }
 
-    html+='<p>今天請完成以下事情：</p>'
+    html+='<p>今日要做的事：</p>'
       +'<ul style="text-align:left;display:inline-block;">'
-      +'<li>① 做你的工作（或請假）→ 賺錢主要來源。</li>'
-      +'<li>② 選擇吃飯 1～3 次 → 補體力。</li>'
-      +'<li>③ 做 1～2 個休閒活動 → 加心情。</li>'
-      +'<li>④ 若是 Day1 或 Day3 → 可抽命運事件卡！</li>'
-      +'<li>⑤ 注意！Day2、Day4 會有強制花費，記得預留現金。</li>'
+      +'<li>① 上班或請假。</li>'
+      +'<li>② 吃飯 1～3 次。</li>'
+      +'<li>③ 做 1～2 個休閒活動。</li>'
+      +'<li>④ Day1、3 可抽事件卡。</li>'
+      +'<li>⑤ Day2、4 有固定支出，要預留現金。</li>'
       +'</ul>';
 
     var prev=getStartStateForDay(d);
     var fxHint=1,statusNote='';
-    if(prev.energy>110){fxHint*=1.5;statusNote+='💪 體力 &gt;110：薪水 1.5 倍。<br>';}
-    if(prev.energy<50){fxHint*=0.5;statusNote+='😵 體力 &lt;50（過勞）：薪水減半。<br>';}
-    if(prev.mood>110){fxHint*=1.5;statusNote+='😄 心情 &gt;110（非常快樂）：薪水 1.5 倍。<br>';}
-    if(prev.mood<30){fxHint*=0.5;statusNote+='😞 心情 &lt;30（心情低落）：薪水減半。<br>';}
+    if(prev.energy>110){fxHint*=1.5;statusNote+='💪 體力 &gt;110：薪水 ×1.5<br>';}
+    if(prev.energy<50){fxHint*=0.5;statusNote+='😵 體力 &lt;50：薪水 ÷2（過勞）<br>';}
+    if(prev.mood>110){fxHint*=1.5;statusNote+='😄 心情 &gt;110：薪水 ×1.5<br>';}
+    if(prev.mood<30){fxHint*=0.5;statusNote+='😞 心情 &lt;30：薪水 ÷2（低落）<br>';};
 
     S.effects[d]={fxHint:fxHint};save();
     if(statusNote)html+='<hr><p>'+statusNote+'</p>';
 
-    // 📘 每天的記帳規則提醒
     html+='<hr><p>📘 <b>今日記帳提醒：</b><br>'
-         +'每完成一次工作、餐食、休閒、借款／還款或事件，請在下方「記帳面板」輸入：金額＋體力變化＋心情變化。<br>'
-         +'忘記記帳，結算時就會發現你跟系統的結果差很多喔！</p>';
+         +'每做一件事，就到下方記帳面板填金額＋體力＋心情。<br>'
+         +'忘記記，很容易跟系統差很多喔！</p>';
 
-    if(d===1||d===3)html+='<p>🎲 今天可以抽命運事件卡，建議抽 1～2 次。</p>';
+    if(d===1||d===3)html+='<p>🎲 今天可抽命運事件卡（建議 1～2 次）。</p>';
     if(d===2){
       addSys({type:'expense',cat:'event',amt:250,e:0,m:0,note:'強制：繳班費'});
-      html+='<p>📌 今天會自動發生「繳班費」，請留意金錢變化（後台已扣 250）。</p>';
+      html+='<p>📌 今日固定支出：「繳班費 250 元」，系統已自動扣款。</p>';
     }
     if(d===4){
       addSys({type:'expense',cat:'event',amt:150,e:0,m:0,note:'強制：水電費／冷氣儲值'});
-      html+='<p>📌 今天會自動發生「水電費／冷氣儲值」，請留意金錢變化（後台已扣 150）。</p>';
+      html+='<p>📌 今日固定支出：「水電費／冷氣儲值 150 元」，系統已自動扣款。</p>';
     }
 
     var allowDraw=(d===1||d===3);
@@ -1110,10 +1163,9 @@
   $('#endDay').onclick=function(){
     var d=S.meta.day;
 
-    // ⚠ 若今天學生完全沒有記帳，先給提醒
     var stuEmpty = !S.tx_stu[d] || S.tx_stu[d].length===0;
     if(stuEmpty){
-      alertWarn('⚠ 今天在「學生記帳面板」完全沒有紀錄。\n請思考：你今天真的完全沒有收支或體力／心情變化嗎？\n\n（系統仍會依後台紀錄往下進行，這會影響結算時的誤差喔！）');
+      alertWarn('今天你在「學生記帳」完全沒有紀錄。\n想一想：真的都沒有收支或體力／心情變化嗎？\n系統仍會照後台跑，結算時誤差會變大喔。');
     }
 
     var st=calcSysEndState(d);
@@ -1125,7 +1177,7 @@
       save();
       beep('dead');alertWarn(deathMsg(f));
     }else{
-      beep('warn');alertInfo('🌙 今天結束了，辛苦了！');
+      beep('warn');alertInfo('今天結束，記得回頭看一下你花了什麼、賺了什麼。');
     }
 
     if(S.meta.day<4){
@@ -1173,6 +1225,39 @@
     }
   }
 
+  function sumDayTx(arr) {
+    var m = 0, e = 0, mo = 0;
+    for (var i = 0; i < arr.length; i++) {
+      var t = arr[i];
+      m += (t.type === 'income' ? +t.amt : -t.amt);
+      e += t.e || 0;
+      mo += t.m || 0;
+    }
+    return {money: m, energy: e, mood: mo};
+  }
+
+  function buildDailyDiffTable(){
+    var tbody = document.getElementById('dailyDiffBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    for (var d = 1; d <= 4; d++) {
+      var sysDay = sumDayTx(S.tx_sys[d] || []);
+      var stuDay = sumDayTx(S.tx_stu[d] || []);
+
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>Day ' + d + '</td>' +
+        '<td class="right pair-money">' + sysDay.money + '</td>' +
+        '<td class="right pair-money">' + stuDay.money + '</td>' +
+        '<td class="right pair-energy">' + sysDay.energy + '</td>' +
+        '<td class="right pair-energy">' + stuDay.energy + '</td>' +
+        '<td class="right pair-mood">' + sysDay.mood + '</td>' +
+        '<td class="right pair-mood">' + stuDay.mood + '</td>';
+      tbody.appendChild(tr);
+    }
+  }
+
   function updateSummary(success){
     var sys=calcSysAllForPayload(),stu=calcStuUpTo(4);
     $('#smMoney').textContent=Math.round(sys.money);
@@ -1185,23 +1270,24 @@
     $('#stD').textContent=stu.deaths;
 
     var diff=Math.abs(stu.money-sys.money);
-    var msg='你與系統金錢差距：$'+diff+'。';
-    if(diff<=50)msg+='🟢 記帳非常精準！';
-    else if(diff<=200)msg+='🟡 可能漏記了一些花費～';
-    else msg+='🔴 檢查是否遺漏事件或固定支出。';
+    var msg='你和系統的「金錢差距」是：$'+diff+'。';
+    if(diff<=50)msg+='🟢 非常接近，記帳很仔細！';
+    else if(diff<=200)msg+='🟡 有一點差距，可能少記幾筆。';
+    else msg+='🔴 差很多，看看是不是忘記記固定支出或事件。';
 
     var dd=(S.deathDays||[]).slice().sort(function(a,b){return a-b;});
     var deadInfo=dd.length
-      ? '系統偵測死亡發生日：Day '+dd.join('、')+'。'
-      : '本次沒有系統偵測到死亡事件。';
+      ? '系統偵測到死亡日：Day '+dd.join('、')+'。'
+      : '系統沒有偵測到死亡事件。';
 
     $('#delta').textContent=msg+' '+deadInfo;
 
     fillDetailTable('#sysTable tbody',S.tx_sys);
     fillDetailTable('#stuTable tbody',S.tx_stu);
+    buildDailyDiffTable();
 
     if(success){
-      alertSuccess('🎉 恭喜完成 4 天挑戰！<br>看看系統記錄 vs 你自己的記帳，有沒有很接近呢？');
+      alertSuccess('🎉 4 天挑戰完成！\n看看自己的記帳和系統差多少，想想是在哪些地方漏掉。');
       beep('ding');setTimeout(function(){beep('ding');},200);
     }
   }
@@ -1213,23 +1299,16 @@
   function openForm(obj){
     if(!S.formURL){
       try{
-        S.formURL = localStorage.getItem(FORMKEY) || '';
+        S.formURL = localStorage.getItem(FORMKEY) || DEFAULT_FORM;
       }catch(e){}
     }
     if(!S.formURL){
-      alertWarn('老師尚未設定表單網址');
+      alertWarn('老師尚未設定表單網址。');
       return;
     }
     window.open(S.formURL + encodeURIComponent(JSON.stringify(obj)),'_blank');
   }
   $('#sendEnd').onclick=function(){openForm(finalPayload());};
-  $('#copy').onclick=function(){
-    var txt=JSON.stringify(finalPayload());
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(txt).then(function(){alertSuccess('已複製 JSON，可貼到表單或老師端。');})
-      .catch(function(){alertInfo(txt);});
-    }else alertInfo(txt);
-  };
 
   $('#tun').onclick=function(){
     if(($('#tpw').value||'').trim()===TEACHER){$('#tTools').classList.remove('hidden');}
@@ -1268,7 +1347,7 @@
   $('#csvAll').onclick=function(){
     var lines=($('#agg').value||'').split(/\n+/);
     lines=lines.map(function(s){return s.trim();}).filter(function(s){return s;});
-    if(!lines.length){alertWarn('請先貼上並解析學生 JSON');return;}
+    if(!lines.length){alertWarn('請先貼上並解析學生 JSON。');return;}
     var rows=[["student","day","sys_money","stu_money","sys_energy","stu_energy","sys_mood","stu_mood","sys_deaths","stu_deaths"]];
     for(var i=0;i<lines.length;i++){
       var line=lines[i];
