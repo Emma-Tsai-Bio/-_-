@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>好漾人生｜雙中模擬市民 v6.reset+hint.5</title>
+  <title>好漾人生｜雙中模擬市民 v6.reset+hint.5+loan-invest-saving</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root{
@@ -202,6 +202,9 @@
           <div class="h4">💼 工作與請假</div>
           <div class="row">
             <button id="work" class="primary">完成工作（教師認證）</button>
+            <button id="loanBtn" class="primary">借款／還款</button>
+            <button id="investBtn" class="primary">投資</button>
+            <button id="savingBtn" class="primary">活存</button>
             <button id="giftBtn" class="good hidden">粉絲贈禮（大網紅）</button>
           </div>
           <div class="row">
@@ -577,6 +580,18 @@
   function key(){return PFX+":"+(S.meta.klass||'NA')+"-"+(S.meta.no||'NA')+"-"+(S.meta.name||'NA');}
   function save(){try{localStorage.setItem(key(),JSON.stringify(S));}catch(e){}}
 
+  // 頁面切換 + 結束今天按鈕顯示控制
+  function nav(id){
+    var secs=$$('main>section');
+    for(var i=0;i<secs.length;i++){
+      secs[i].classList.toggle('hidden','#'+secs[i].id!==id);
+    }
+    var showEnd = (id === '#page-record');
+    var endBtn = $('#endDay');
+    if(endBtn) endBtn.style.display = showEnd ? 'block' : 'none';
+    location.hash=id;
+  }
+
   function setBars(e,m){
     $('#eBar').style.width=Math.max(0,Math.min(100,e))+'%';
     $('#mBar').style.width=Math.max(0,Math.min(100,m))+'%';
@@ -661,18 +676,6 @@
   };
   $('#seeRules').onclick=function(){nav('#page-rules');};
   $('#toRecord').onclick=function(){nav('#page-record');if(!started){started=true;dayStart(true);}};
-
-  // 頁面切換 + 結束今天按鈕顯示控制
-  function nav(id){
-    var secs=$$('main>section');
-    for(var i=0;i<secs.length;i++){
-      secs[i].classList.toggle('hidden','#'+secs[i].id!==id);
-    }
-    var showEnd = (id === '#page-record');
-    var endBtn = $('#endDay');
-    if(endBtn) endBtn.style.display = showEnd ? 'block' : 'none';
-    location.hash=id;
-  }
 
   // 學生記帳
   var tbody=$('#tTable tbody');
@@ -963,6 +966,174 @@
     updateGiftButtonForDay();
   };
 
+  // 🔐 老師金錢操作（借款／還款、投資、活存）
+  function teacherMoneyOp(kind){
+    var titleMap={
+      loan:'借款／還款',
+      invest:'投資',
+      saving:'活存'
+    };
+    var instMap={
+      loan:'請老師輸入本次金額與教師密碼，協助記錄「向民間機構」借款或還款。',
+      invest:'請老師輸入本次金額與教師密碼，協助記錄「向民間機構」投資的投入或本利和。',
+      saving:'請老師輸入本次金額與教師密碼，協助記錄「銀行」活存的存入或本利和。'
+    };
+    Swal.fire({
+      title:titleMap[kind],
+      html:
+        '<p>'+instMap[kind]+'</p>'+
+        '<input id="sw-amt" class="swal2-input" type="number" min="1" placeholder="金額（正數）">'+
+        '<input id="sw-pw" class="swal2-input" type="password" placeholder="教師密碼">',
+      focusConfirm:false,
+      showCancelButton:true,
+      confirmButtonText:'下一步',
+      cancelButtonText:'取消',
+      preConfirm:function(){
+        var a=document.getElementById('sw-amt').value;
+        var pw=document.getElementById('sw-pw').value;
+        var n=+a;
+        if(!a || isNaN(n) || n<=0){
+          Swal.showValidationMessage('請輸入大於 0 的金額');
+          return false;
+        }
+        if(pw.trim()!==TEACHER){
+          Swal.showValidationMessage('教師密碼錯誤');
+          return false;
+        }
+        return {amount:Math.round(n)};
+      }
+    }).then(function(res){
+      if(!res.isConfirmed)return;
+      var amt=res.value.amount;
+      var d=S.meta.day;
+
+      if(kind==='loan'){
+        Swal.fire({
+          title:'借款或還款',
+          html:
+            '請選擇要記錄的項目：<br><br>'+
+            '✅ <b>借款</b>：向民間機構借錢，金額會加到玩家身上（收入）。<br>'+
+            '✅ <b>還款</b>：向民間機構還錢，金額會從玩家身上扣除（支出）。<br><br>'+
+            '詳細利率與條件請找「民間機構」處理。',
+          showDenyButton:true,
+          showCancelButton:true,
+          confirmButtonText:'借款（收入）',
+          denyButtonText:'還款（支出）',
+          cancelButtonText:'取消'
+        }).then(function(ch){
+          if(ch.isConfirmed){
+            // 借款：收入 +amt
+            addSys({
+              type:'income',
+              cat:'loan',
+              amt:amt,
+              e:0,m:0,
+              note:'向民間機構借款 '+amt+' 元'
+            });
+            beep('cash');
+            alertSuccess('已記錄：向民間機構借款 '+amt+' 元（收入）。');
+          }else if(ch.isDenied){
+            // 還款：支出 -amt
+            addSys({
+              type:'expense',
+              cat:'loan',
+              amt:amt,
+              e:0,m:0,
+              note:'向民間機構還款 '+amt+' 元'
+            });
+            beep('cash');
+            alertSuccess('已記錄：向民間機構還款 '+amt+' 元（支出）。');
+          }
+        });
+      }
+
+      if(kind==='invest'){
+        Swal.fire({
+          title:'投資：投入或本利和',
+          html:
+            '請選擇要記錄的項目：<br><br>'+
+            '✅ <b>投入金額</b>：把錢拿去投資，金額會從玩家身上扣除（支出）。<br>'+
+            '✅ <b>本利和</b>：投資結束拿回本利和，金額會加到玩家身上（收入）。<br><br>'+
+            '實際投資商品與風險，請找「民間機構」處理。',
+          showDenyButton:true,
+          showCancelButton:true,
+          confirmButtonText:'投入金額（支出）',
+          denyButtonText:'本利和（收入）',
+          cancelButtonText:'取消'
+        }).then(function(ch){
+          if(ch.isConfirmed){
+            // 投入金額：支出 -amt
+            addSys({
+              type:'expense',
+              cat:'bank',
+              amt:amt,
+              e:0,m:0,
+              note:'投資投入金額 '+amt+' 元（請向民間機構確認）'
+            });
+            beep('cash');
+            alertSuccess('已記錄：投資投入 '+amt+' 元（支出）。');
+          }else if(ch.isDenied){
+            // 本利和：收入 +amt
+            addSys({
+              type:'income',
+              cat:'bank',
+              amt:amt,
+              e:0,m:0,
+              note:'投資本利和 '+amt+' 元（請向民間機構確認）'
+            });
+            beep('cash');
+            alertSuccess('已記錄：投資本利和 '+amt+' 元（收入）。');
+          }
+        });
+      }
+
+      if(kind==='saving'){
+        Swal.fire({
+          title:'活存：存入或本利和',
+          html:
+            '請選擇要記錄的項目：<br><br>'+
+            '✅ <b>投入金額</b>：把錢存入銀行活存，金額會從玩家身上扣除（支出）。<br>'+
+            '✅ <b>本利和</b>：活存解約或領出本利和，金額會加到玩家身上（收入）。<br><br>'+
+            '實際利率與規則，請找「銀行」處理。',
+          showDenyButton:true,
+          showCancelButton:true,
+          confirmButtonText:'投入金額（支出）',
+          denyButtonText:'本利和（收入）',
+          cancelButtonText:'取消'
+        }).then(function(ch){
+          if(ch.isConfirmed){
+            // 活存存入：支出 -amt
+            addSys({
+              type:'expense',
+              cat:'bank',
+              amt:amt,
+              e:0,m:0,
+              note:'活存存入 '+amt+' 元（請向銀行確認）'
+            });
+            beep('cash');
+            alertSuccess('已記錄：活存存入 '+amt+' 元（支出）。');
+          }else if(ch.isDenied){
+            // 活存本利和：收入 +amt
+            addSys({
+              type:'income',
+              cat:'bank',
+              amt:amt,
+              e:0,m:0,
+              note:'活存本利和 '+amt+' 元（請向銀行確認）'
+            });
+            beep('cash');
+            alertSuccess('已記錄：活存本利和 '+amt+' 元（收入）。');
+          }
+        });
+      }
+
+    });
+  }
+
+  $('#loanBtn').onclick=function(){teacherMoneyOp('loan');};
+  $('#investBtn').onclick=function(){teacherMoneyOp('invest');};
+  $('#savingBtn').onclick=function(){teacherMoneyOp('saving');};
+
   // 餐食
   $('#food0').onclick=function(){if(!canUse('food'))return;addSys({type:'expense',cat:'food',amt:0,e:-20,m:-15,note:'不吃飯'});used('food');beep('cash');alertInfo('🍽 不吃飯 → 體-20，心-15');};
   $('#food1').onclick=function(){if(!canUse('food'))return;if(!canUse('fun'))return;addSys({type:'expense',cat:'food',amt:100,e:+20,m:+10,note:'自己備餐'});used('food');used('fun');beep('cash');alertInfo('🍱 自己備餐 -100，體+20，心+10（占 1 次休閒額度）');};
@@ -1129,7 +1300,7 @@
     if(prev.energy>110){fxHint*=1.5;statusNote+='💪 體力 &gt;110：薪水 ×1.5<br>';}
     if(prev.energy<50){fxHint*=0.5;statusNote+='😵 體力 &lt;50：薪水 ÷2（過勞）<br>';}
     if(prev.mood>110){fxHint*=1.5;statusNote+='😄 心情 &gt;110：薪水 ×1.5<br>';}
-    if(prev.mood<30){fxHint*=0.5;statusNote+='😞 心情 &lt;30：薪水 ÷2（低落）<br>';};
+    if(prev.mood<30){fxHint*=0.5;statusNote+='😞 心情 &lt;30：薪水 ÷2（低落）<br>';}
 
     S.effects[d]={fxHint:fxHint};save();
     if(statusNote)html+='<hr><p>'+statusNote+'</p>';
